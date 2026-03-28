@@ -1,5 +1,5 @@
-#ifndef MUSIC_TYPE_H
-#define MUSIC_TYPE_H
+#ifndef GK_MUSIC_TYPE_H
+#define GK_MUSIC_TYPE_H
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -45,4 +45,4 @@ struct GK_MusicSetting {
 };
 
 
-#endif /* MUSIC_TYPE_H */
+#endif /* GK_MUSIC_TYPE_H */

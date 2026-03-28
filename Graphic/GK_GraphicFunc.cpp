@@ -464,7 +464,7 @@ void GK_Render(GK_Main *app) {
 
             case GK_GRAPHIC_IMAGE:
                 if (obj->data.img != nullptr) {
-                    gk_show_image(render, obj->data.img->tex, obj->data.img->place);
+                    gk_show_image(render, obj->data.img->tex, &(obj->data.img->place));
                 }
                 break;
 

@@ -1,11 +1,10 @@
-#ifndef GRAPHIC_TYPE_H
-#define GRAPHIC_TYPE_H
+#ifndef GK_GRAPHIC_TYPE_H
+#define GK_GRAPHIC_TYPE_H
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
-
 
 
 typedef int GK_ID;
@@ -131,4 +130,4 @@ struct GK_GraphicSystem {
     TTF_Font *font;
 };
 
-#endif /* GRAPHIC_TYPE_H */
+#endif /* GK_GRAPHIC_TYPE_H */

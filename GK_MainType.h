@@ -1,5 +1,5 @@
-#ifndef TYPE_H
-#define TYPE_H
+#ifndef GK_MAIN_TYPE_H
+#define GK_MAIN_TYPE_H
 
 #include "GK_MusicType.h"
 #include "GK_GraphicType.h"
@@ -42,4 +42,4 @@ struct GK_Main {
 
 
 
-#endif /* TYPE_H */
+#endif /* GK_MAIN_TYPE_H */

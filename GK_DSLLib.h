@@ -1,5 +1,5 @@
-#ifndef DSL_LIB_H
-#define DSL_LIB_H
+#ifndef GK_DSL_LIB_H
+#define GK_DSL_LIB_H
 
 #include "GK_GraphicType.h"
 
@@ -37,4 +37,4 @@ XXX GK_OBJECT_COUNT                 = 21;
 #undef XXX
 // ====================================================================
 
-#endif /* DSL_LIB_H */
+#endif /* GK_DSL_LIB_H */
