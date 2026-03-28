@@ -19,7 +19,7 @@ constexpr static int GK_PARSER_MAX_ITEMS = GK_OBJECT_COUNT;
 // ====================================================================
 
 // ------------------------------------------------------------------
-struct GK_Parser {
+struct GK_ParserObject {
     char *buffer;
     int cur_p;
     int size;
@@ -29,6 +29,15 @@ struct GK_Parser {
     SDL_Renderer *render;
 };
 
+// ------------------------------------------------------------------
+struct GK_ParserMenu {
+    char *buffer;
+    int cur_p;
+    int size;
+
+    GK_Menu *menu_pool;
+    int cur_menu;
+};
 
 
 #endif /* GK_PARSER_TYPE_H */

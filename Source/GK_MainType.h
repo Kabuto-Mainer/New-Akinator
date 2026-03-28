@@ -28,7 +28,7 @@ enum GK_MenuKind {
 // ------------------------------------------------------------------
 struct GK_Display {
     GK_GraphicSystem sys;
-    GK_ObjectPool *data;
+    GK_ObjectPool data;
     GK_Menu menus[GK_AMOUNT_MENU];
     GK_MenuKind cur_menu;
     GK_Music music;

@@ -11,6 +11,14 @@
 #include "GK_DSLLib.h"
 
 // ====================================================================
+// USED CONSTANTS
+// ====================================================================
+
+extern const char *GK_CONFIG_OBJECT_FILE;
+extern const char *GK_CONFIG_MENU_FILE;
+
+
+// ====================================================================
 // DECLARATION SUPPORT FUNCTIONS
 // ====================================================================
 
@@ -39,30 +47,42 @@ static inline SDL_Texture *gk_create_color_texture(SDL_Renderer *render, const S
 
 // ------------------------------------------------------------------
 // Support macros
-static void gk_skip_void(GK_Parser *par);
-static inline char get_c(GK_Parser *par);
-static inline void next_c(GK_Parser *par);
+static void gk_skip_void(GK_ParserObject *par);
+static void gk_skip_void(GK_ParserMenu *par);
+
+static inline char get_c(GK_ParserObject *par);
+static inline char get_c(GK_ParserMenu *par);
+
+static inline void next_c(GK_ParserObject *par);
+static inline void next_c(GK_ParserMenu *par);
+
 
 // ------------------------------------------------------------------
-// Parser config
-static void gk_parse_text(GK_Parser *par);
-static void gk_parse_text_arg(GK_Parser *par, GK_GraphicText *txt);
+// Parser object config
+static void gk_parse_object_text(GK_ParserObject *par);
+static void gk_parse_object_text_arg(GK_ParserObject *par, GK_GraphicText *txt);
 
-static void gk_parse_video(GK_Parser *par);
-static void gk_parse_video_arg(GK_Parser *par, GK_GraphicVideo *txt);
+static void gk_parse_object_video(GK_ParserObject *par);
+static void gk_parse_object_video_arg(GK_ParserObject *par, GK_GraphicVideo *txt);
 
-static void gk_parse_button(GK_Parser *par);
-static void gk_parse_button_arg(GK_Parser *par, GK_GraphicButton *txt);
+static void gk_parse_object_button(GK_ParserObject *par);
+static void gk_parse_object_button_arg(GK_ParserObject *par, GK_GraphicButton *txt);
 
-static void gk_parse_image(GK_Parser *par);
-static void gk_parse_image_arg(GK_Parser *par, GK_GraphicImage *txt);
+static void gk_parse_object_image(GK_ParserObject *par);
+static void gk_parse_object_image_arg(GK_ParserObject *par, GK_GraphicImage *txt);
+
+
+// ------------------------------------------------------------------
+// Parse menu config
+static void gk_push_menu(GK_Menu *menu, int value);
+
 
 // ====================================================================
 // MAIN PARSE FUNCTIONS
 // ====================================================================
 
 // ------------------------------------------------------------------
-void GK_ParseInit(GK_Parser *par, SDL_Renderer *render, const char *name_file) {
+void GK_ParseObjectInit(GK_ParserObject *par, SDL_Renderer *render, const char *name_file) {
     assert(par);
 
     int size = gk_get_file_size(name_file);
@@ -88,50 +108,131 @@ void GK_ParseInit(GK_Parser *par, SDL_Renderer *render, const char *name_file) {
 }
 
 // ------------------------------------------------------------------
-void GK_ParseLoop(GK_Parser *par) {
+int GK_ParseObjectLoop(GK_ParserObject *par) {
     assert(par);
 
     char buffer_kind[GK_PARSER_MAX_KIND] = "";
     int len = 0;
 
     while (par->cur_p < par->size) {
+        if (get_c(par) == '#') {
+            while (get_c(par) != '\n') {
+                par->cur_p++;
+            }
+            par->cur_p++;
+            continue;
+        }
+
         sscanf(par->buffer + par->cur_p, "%s %n", buffer_kind, &len);
         par->cur_p += len;
 
         uint64_t hash = gk_get_hash(buffer_kind);
         switch (hash) {
             case gk_get_hash("text"):
-                gk_parse_text(par);
+                gk_parse_object_text(par);
                 break;
 
             case gk_get_hash("button"):
-                gk_parse_button(par);
+                gk_parse_object_button(par);
                 break;
 
             case gk_get_hash("video"):
-                gk_parse_video(par);
+                gk_parse_object_video(par);
                 break;
 
             case gk_get_hash("image"):
-                gk_parse_image(par);
+                gk_parse_object_image(par);
                 break;
 
             default:
-                ExitF("Unknown Kind", );
+                ExitF("Unknown Kind", -1);
         }
         gk_skip_void(par);
     }
-    return ;
+    return par->cur_o;
 }
 
 // ------------------------------------------------------------------
-void GK_ParseDestroy(GK_Parser *par) {
+void GK_ParseObjectDestroy(GK_ParserObject *par) {
     assert(par);
 
     free(par->buffer);
     return ;
 }
 
+// ------------------------------------------------------------------
+void GK_ParseMenuInit(GK_ParserMenu *par, GK_Menu *menus, const char *name_file) {
+    assert(par);
+    assert(menus);
+    assert(name_file);
+
+    int size = gk_get_file_size(name_file);
+    char *buffer = gk_create_file_buffer(name_file, size);
+
+    par->buffer = buffer;
+    par->cur_p = 0;
+    par->size = size;
+
+    par->menu_pool = menus;
+    par->cur_menu = 0;
+
+    return ;
+}
+
+// ------------------------------------------------------------------
+void GK_ParseMenuLoop(GK_ParserMenu *par) {
+    assert(par);
+
+    int len = 0;
+    int value = 0;
+
+    gk_skip_void(par);
+    while (get_c(par) == '|' && par->cur_p < par->size) {
+        next_c(par);
+
+        while (get_c(par) != '|') {
+            sscanf(par->buffer + par->cur_p, "%d %n", &value, &len);
+            par->cur_p += len;
+
+            gk_push_menu(&(par->menu_pool[par->cur_menu]), value);
+            gk_skip_void(par);
+        }
+        next_c(par);
+        gk_skip_void(par);
+
+        par->cur_menu++;
+    }
+    return ;
+}
+
+// ------------------------------------------------------------------
+void GK_ParseMenuDestroy(GK_ParserMenu *par) {
+    assert(par);
+
+    free(par->buffer);
+    return ;
+}
+
+// ------------------------------------------------------------------
+void GK_Parse(GK_Display *disp) {
+    assert(disp);
+
+    GK_ParserObject par_obj = {};
+    GK_ParseObjectInit(&par_obj, disp->sys.ren, GK_CONFIG_OBJECT_FILE);
+    int size_pool = GK_ParseObjectLoop(&par_obj);
+
+    disp->data.size = size_pool;
+    disp->data.pool = par_obj.pool;
+
+    GK_ParseObjectDestroy(&par_obj);
+
+    GK_ParserMenu par_menu = {};
+    GK_ParseMenuInit(&par_menu, disp->menus, GK_CONFIG_MENU_FILE);
+    GK_ParseMenuLoop(&par_menu);
+    GK_ParseMenuDestroy(&par_menu);
+
+    return ;
+}
 
 
 // ====================================================================
@@ -169,7 +270,22 @@ static char *gk_create_file_buffer(const char *name, int size) {
 }
 
 // ------------------------------------------------------------------
-static void gk_skip_void(GK_Parser *par) {
+static void gk_skip_void(GK_ParserObject *par) {
+    assert(par);
+
+    int add_ind = 0;
+    while (true) {
+        char sym = par->buffer[par->cur_p + add_ind];
+        if (sym == ' ' || sym == '\n') {
+            add_ind++;
+            continue;
+        }
+        break;
+    }
+    par->cur_p += add_ind;
+    return ;
+}
+static void gk_skip_void(GK_ParserMenu *par) {
     assert(par);
 
     int add_ind = 0;
@@ -213,24 +329,51 @@ static inline SDL_Texture *gk_create_color_texture(SDL_Renderer *render, const S
 }
 
 // ------------------------------------------------------------------
-static inline char get_c(GK_Parser *par) {
+static inline char get_c(GK_ParserObject *par) {
+    return par->buffer[par->cur_p];
+}
+static inline char get_c(GK_ParserMenu *par) {
     return par->buffer[par->cur_p];
 }
 
 // ------------------------------------------------------------------
-static inline void next_c(GK_Parser *par) {
+static inline void next_c(GK_ParserObject *par) {
+    par->cur_p++;
+}
+static inline void next_c(GK_ParserMenu *par) {
     par->cur_p++;
 }
 
+// ------------------------------------------------------------------
+static void gk_push_menu(GK_Menu *menu, int value) {
+    assert(menu);
+
+    if (menu->data == NULL) {
+        menu->data = (GK_ID *)calloc(10, sizeof(GK_ID));
+        if (menu->data == NULL)     ExitF("NULL Calloc", );
+
+        menu->size = 0;
+        menu->capacity = 10;
+    }
+    if (menu->size == menu->capacity) {
+        menu->data = (GK_ID *)realloc(menu->data, (size_t)menu->size * 2 * sizeof(GK_ID));
+        if (menu->data == NULL)     ExitF("NULL Calloc", );
+
+        menu->capacity *= 2;
+    }
+    menu->data[menu->size++] = value;
+
+    return ;
+}
 
 
 // ====================================================================
-// SUPPORT PARSE FUNCTIONS
+// SUPPORT PARSE OBJECT FUNCTIONS
 // ====================================================================
 
 // ====================================================================
 // TEXT
-static void gk_parse_text(GK_Parser *par) {
+static void gk_parse_object_text(GK_ParserObject *par) {
     assert(par);
     gk_skip_void(par);
 
@@ -242,7 +385,7 @@ static void gk_parse_text(GK_Parser *par) {
     if (text == NULL) ExitF("NULL Calloc", );
 
     while (get_c(par) != '}' && get_c(par) != '\0') {
-        gk_parse_text_arg(par, text);
+        gk_parse_object_text_arg(par, text);
         gk_skip_void(par);
     }
     if (get_c(par) == '\0') ExitF("Unexpected EOF", );
@@ -258,7 +401,7 @@ static void gk_parse_text(GK_Parser *par) {
     return ;
 }
 
-static void gk_parse_text_arg(GK_Parser *par, GK_GraphicText *txt) {
+static void gk_parse_object_text_arg(GK_ParserObject *par, GK_GraphicText *txt) {
     assert(par);
     assert(txt);
 
@@ -333,7 +476,7 @@ static void gk_parse_text_arg(GK_Parser *par, GK_GraphicText *txt) {
             gk_skip_void(par);
 
             char text_buffer[GK_PARSER_MAX_TEXT] = "";
-            sscanf(par->buffer + par->cur_p, "$%[^$]$ %n", text_buffer, &len);
+            sscanf(par->buffer + par->cur_p, "\"%[^\"]\" %n", text_buffer, &len);
             par->cur_p += len;
 
             txt->data.syms = strdup(text_buffer);
@@ -349,7 +492,7 @@ static void gk_parse_text_arg(GK_Parser *par, GK_GraphicText *txt) {
 
 // ====================================================================
 // VIDEO
-static void gk_parse_video(GK_Parser *par) {
+static void gk_parse_object_video(GK_ParserObject *par) {
     assert(par);
     gk_skip_void(par);
 
@@ -361,7 +504,7 @@ static void gk_parse_video(GK_Parser *par) {
     if (vid == NULL) ExitF("NULL Calloc", );
 
     while (get_c(par) != '}' && get_c(par) != '\0') {
-        gk_parse_video_arg(par, vid);
+        gk_parse_object_video_arg(par, vid);
         gk_skip_void(par);
     }
     if (get_c(par) == '\0') ExitF("Unexpected EOF", );
@@ -377,7 +520,7 @@ static void gk_parse_video(GK_Parser *par) {
     return ;
 }
 
-static void gk_parse_video_arg(GK_Parser *par, GK_GraphicVideo *vid) {
+static void gk_parse_object_video_arg(GK_ParserObject *par, GK_GraphicVideo *vid) {
     assert(par);
     assert(vid);
 
@@ -408,20 +551,21 @@ static void gk_parse_video_arg(GK_Parser *par, GK_GraphicVideo *vid) {
             par->cur_p += len;
 
             char path_dir[GK_PARSER_MAX_PATH] = "";
-            sscanf(par->buffer + par->cur_p, "$%[^$]$ %n", path_dir, &len);
+            sscanf(par->buffer + par->cur_p, "\"%[^\"]\" %n", path_dir, &len);
             par->cur_p += len;
 
             vid->size = size;
-            vid->data = (SDL_Texture **)calloc((size_t)size, sizeof(SDL_Texture *));
+            vid->data = (SDL_Texture **)calloc((size_t)size + 1, sizeof(SDL_Texture *));
             if (vid->data == NULL) {
                 ExitF("NULL Calloc", );
             }
 
             len = (int)strlen(path_dir);
-            for (int i = 0; i < size; i++) {
+
+            for (int i = 1; i < size + 1; i++) {
                 sprintf(path_dir + len, "/%d.png", i);
                 SDL_Texture *tex = gk_load_texture(par->render, path_dir);
-                vid->data[i] = tex;
+                vid->data[i - 1] = tex;
             }
 
             vid->current = 0;
@@ -447,7 +591,7 @@ static void gk_parse_video_arg(GK_Parser *par, GK_GraphicVideo *vid) {
 
 // ====================================================================
 // BUTTON
-static void gk_parse_button(GK_Parser *par) {
+static void gk_parse_object_button(GK_ParserObject *par) {
     assert(par);
     gk_skip_void(par);
 
@@ -459,7 +603,7 @@ static void gk_parse_button(GK_Parser *par) {
     if (but == NULL) ExitF("NULL Calloc", );
 
     while (get_c(par) != '}' && get_c(par) != '\0') {
-        gk_parse_button_arg(par, but);
+        gk_parse_object_button_arg(par, but);
         gk_skip_void(par);
     }
     if (get_c(par) == '\0') ExitF("Unexpected EOF", );
@@ -475,7 +619,7 @@ static void gk_parse_button(GK_Parser *par) {
     return ;
 }
 
-static void gk_parse_button_arg(GK_Parser *par, GK_GraphicButton *but) {
+static void gk_parse_object_button_arg(GK_ParserObject *par, GK_GraphicButton *but) {
     assert(par);
     assert(but);
 
@@ -578,7 +722,7 @@ static void gk_parse_button_arg(GK_Parser *par, GK_GraphicButton *but) {
 
 // ====================================================================
 // IMAGE
-static void gk_parse_image(GK_Parser *par) {
+static void gk_parse_object_image(GK_ParserObject *par) {
     assert(par);
     gk_skip_void(par);
 
@@ -590,7 +734,7 @@ static void gk_parse_image(GK_Parser *par) {
     if (img == NULL) ExitF("NULL Calloc", );
 
     while (get_c(par) != '}' && get_c(par) != '\0') {
-        gk_parse_image_arg(par, img);
+        gk_parse_object_image_arg(par, img);
         gk_skip_void(par);
     }
     if (get_c(par) == '\0') ExitF("Unexpected EOF", );
@@ -606,7 +750,7 @@ static void gk_parse_image(GK_Parser *par) {
     return ;
 }
 
-static void gk_parse_image_arg(GK_Parser *par, GK_GraphicImage *img) {
+static void gk_parse_object_image_arg(GK_ParserObject *par, GK_GraphicImage *img) {
     assert(par);
     assert(img);
 
@@ -633,7 +777,7 @@ static void gk_parse_image_arg(GK_Parser *par, GK_GraphicImage *img) {
         // ---------------------------------------------------------------
         case gk_get_hash("data"): {
             char path_buffer[GK_PARSER_MAX_PATH] = "";
-            sscanf(par->buffer + par->cur_p, "$%[^$]$ %n", path_buffer, &len);
+            sscanf(par->buffer + par->cur_p, "\"%[^\"]\" %n", path_buffer, &len);
             par->cur_p += len;
 
             img->tex = gk_load_texture(par->render, path_buffer);

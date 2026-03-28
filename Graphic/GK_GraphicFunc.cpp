@@ -68,9 +68,9 @@ static GK_ActionKind gk_check_click_button(SDL_Event *event, GK_GraphicButton *b
 static void gk_add_text(GK_Display *disp, const char *text, GK_ID id) {
     assert(disp);
     assert(text);
-    if (id < 0 || id >= disp->data->size)  ExitF("Bad ID", );
+    if (id < 0 || id >= disp->data.size)  ExitF("Bad ID", );
 
-    GK_GraphicObject *obj = &(disp->data->pool[id]);
+    GK_GraphicObject *obj = &(disp->data.pool[id]);
     if (obj->kind != GK_GRAPHIC_TEXT || obj->data.text == nullptr) {
         return;
     }
@@ -99,9 +99,9 @@ static void gk_add_text(GK_Display *disp, const char *text, GK_ID id) {
 // ----------------------------------------------------------------------
 static void gk_clear_text(GK_Display *disp, GK_ID id) {
     assert(disp);
-    if (id < 0 || id >= disp->data->size) ExitF("Bad ID", );
+    if (id < 0 || id >= disp->data.size) ExitF("Bad ID", );
 
-    GK_GraphicObject *obj = &(disp->data->pool[id]);
+    GK_GraphicObject *obj = &(disp->data.pool[id]);
     if (obj->kind != GK_GRAPHIC_TEXT || obj->data.text->kind != GK_GRAPHIC_TEXT_KIND_OUTPUT
         || obj->data.text == NULL) {
         return ;
@@ -119,9 +119,9 @@ static void gk_clear_text(GK_Display *disp, GK_ID id) {
 static void gk_add_image(GK_Display *disp, const char *file, GK_ID id) {
     assert(disp);
     assert(file);
-    if (id < 0 || id >= disp->data->size) ExitF("Bad ID", );
+    if (id < 0 || id >= disp->data.size) ExitF("Bad ID", );
 
-    GK_GraphicObject *obj = &(disp->data->pool[id]);
+    GK_GraphicObject *obj = &(disp->data.pool[id]);
     if (obj->kind != GK_GRAPHIC_IMAGE || obj->data.img == nullptr) {
         return ;
     }
@@ -138,9 +138,9 @@ static void gk_add_image(GK_Display *disp, const char *file, GK_ID id) {
 // ----------------------------------------------------------------------
 static void gk_clear_image(GK_Display *disp, GK_ID id) {
     assert(disp);
-    if (id < 0 || id >= disp->data->size) ExitF("Bad ID", );
+    if (id < 0 || id >= disp->data.size) ExitF("Bad ID", );
 
-    GK_GraphicObject *obj = &(disp->data->pool[id]);
+    GK_GraphicObject *obj = &(disp->data.pool[id]);
     if (obj->kind != GK_GRAPHIC_IMAGE || obj->data.img == nullptr) {
         return ;
     }
@@ -366,20 +366,24 @@ void GK_DisplayTreeBranch(GK_Display *disp, GK_TreeObject *obj) {
 GK_ActionKind GK_PollAction(GK_Display *disp) {
     assert(disp);
 
+    // printf("CURRENT MENU %d\n", disp->cur_menu);
     SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
             return GK_ACTION_EXIT;
         }
 
-        GK_Menu *menu = &disp->menus[disp->cur_menu];
+        GK_Menu *menu = &(disp->menus[disp->cur_menu]);
         for (int i = 0; i < menu->size; i++) {
+            // printf("I = %d\n", i);
+
             const GK_ID id = menu->data[i];
-            if (id < 0 || id >= disp->data->size) {
+            if (id < 0 || id >= disp->data.size) {
                 continue;
             }
 
-            GK_GraphicObject *obj = &(disp->data->pool[id]);
+            GK_GraphicObject *obj = &(disp->data.pool[id]);
+            // printf("POINTER %p \n", obj);
             if (obj->kind != GK_GRAPHIC_BUTTON || obj->data.but == NULL) {
                 continue;
             }
@@ -462,11 +466,11 @@ void GK_Render(GK_Main *app) {
     GK_Menu *menu = &app->disp.menus[app->disp.cur_menu];
     for (int i = 0; i < menu->size; i++) {
         const GK_ID id = menu->data[i];
-        if (id < 0 || id >= app->disp.data->size) {
+        if (id < 0 || id >= app->disp.data.size) {
             continue;
         }
 
-        GK_GraphicObject *obj = &(app->disp.data->pool[id]);
+        GK_GraphicObject *obj = &(app->disp.data.pool[id]);
         if (!obj->must_show) {
             continue;
         }

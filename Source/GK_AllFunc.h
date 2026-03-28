@@ -37,10 +37,15 @@ void GK_MainLoop(GK_Main *main_data);
 // PARSER FUNCTIONS
 // ====================================================================
 
-void GK_ParseInit(GK_Parser *par, SDL_Renderer *render, const char *name_file);
-void GK_ParseLoop(GK_Parser *par);
-void GK_ParseDestroy(GK_Parser *par);
+void GK_Parse(GK_Display *disp);
 
+void GK_ParseObjectInit(GK_ParserObject *par, SDL_Renderer *render, const char *name_file);
+int  GK_ParseObjectLoop(GK_ParserObject *par);
+void GK_ParseObjectDestroy(GK_ParserObject *par);
+
+void GK_ParseMenuInit(GK_ParserMenu *par, GK_Menu *menus, const char *name_file);
+void GK_ParseMenuLoop(GK_ParserMenu *par);
+void GK_ParseMenuDestroy(GK_ParserMenu *par);
 
 
 #endif /* GK_ALL_FUNC_H */

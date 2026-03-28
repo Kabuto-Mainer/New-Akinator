@@ -121,6 +121,7 @@ struct GK_ObjectPool {
 struct GK_Menu {
     GK_ID *data;
     int size;
+    int capacity;
 };
 
 // ------------------------------------------------------------------
