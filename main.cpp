@@ -10,7 +10,8 @@
 int GK_SCREEN_WIDTH = 1280;
 int GK_SCREEN_HEIGHT = 720;
 const char *GK_SYSTEM_FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
-
+extern const SDL_Color GK_FONT_COLOR = {255, 255, 255, 255};
+const char *GK_CONFIG_FILE = "obj.conf";
 
 // ====================================================================
 // FUNCTIONS
@@ -22,7 +23,12 @@ int main() {
     GK_InitTree(&(app.tree));
     GK_InitDisplay(&(app.disp));
 
-    app.disp.cur_menu = GK_MENU_START_GUESS;
+    GK_Parser par = {};
+    GK_ParseInit(&par, app.disp.sys.ren, GK_CONFIG_FILE);
+    GK_ParseLoop(&par);
+    GK_ParseDestroy(&par);
+
+    app.disp.cur_menu = GK_MENU_INIT;
     GK_MainLoop(&app);
     GK_DestroyDisplay(&app.disp);
 
@@ -30,9 +36,7 @@ int main() {
 }
 
 void GK_MainLoop(GK_Main *main_data) {
-    if (main_data == nullptr) {
-        return;
-    }
+    assert(main_data);
 
     bool running = true;
 

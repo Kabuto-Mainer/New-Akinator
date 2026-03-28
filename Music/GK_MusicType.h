@@ -21,10 +21,11 @@ enum GK_MusicKind {
 // ====================================================================
 
 // ------------------------------------------------------------------
-struct GK_Music {
-    GK_MusicSetting set;
-    GK_MusicObject *data;
-    int size;
+struct GK_MusicSetting {
+    SDL_AudioDeviceID record;
+    SDL_AudioSpec param_record;
+    SDL_AudioDeviceID play;
+    SDL_AudioSpec param_play;
 };
 
 // ------------------------------------------------------------------
@@ -37,12 +38,13 @@ struct GK_MusicObject {
 };
 
 // ------------------------------------------------------------------
-struct GK_MusicSetting {
-    SDL_AudioDeviceID record;
-    SDL_AudioSpec param_record;
-    SDL_AudioDeviceID play;
-    SDL_AudioSpec param_play;
+struct GK_Music {
+    GK_MusicSetting set;
+    GK_MusicObject *data;
+    int size;
 };
+
+
 
 
 #endif /* GK_MUSIC_TYPE_H */

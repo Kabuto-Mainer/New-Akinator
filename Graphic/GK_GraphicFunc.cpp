@@ -82,9 +82,12 @@ static void gk_add_text(GK_Display *disp, const char *text, GK_ID id) {
     const size_t old_len = txt->data.syms ? strlen(txt->data.syms) : 0;
     const size_t add_len = strlen(text);
 
-    char *buffer = old_len ? (char *)calloc(1, add_len) :
-                             (char *)realloc(buffer, add_len + txt->data.size);
-
+    char *buffer = txt->data.syms;
+    if (old_len == 0) {
+        buffer = (char *)calloc(add_len, sizeof(char));
+    } else {
+        buffer = (char *)realloc(buffer, add_len + (size_t)txt->data.size);
+    }
     if (buffer == NULL) ExitF("NULL allocate", );
 
     memcpy(buffer + old_len, text, add_len + 1);
@@ -157,9 +160,14 @@ static GK_ID gk_get_text_window(const GK_Display *disp) {
         case GK_MENU_GUESS:     return GK_GUESS_MAIN_TEXT;
         case GK_MENU_SUCCESS:   return GK_SUCCESS_MAIN_TEXT;
         case GK_MENU_N_SUCCESS: return GK_N_SUCCESS_MAIN_TEXT;
+
+        case GK_MENU_START_GUESS:
+        case GK_MENU_ADMIN_MENU:
+        case GK_MENU_EXIT_MENU:
+        case GK_MENU_INIT:
         default:                return GK_INVALID_ID;
     }
-    return ;
+    return GK_INVALID_ID;
 }
 
 // ----------------------------------------------------------------------
@@ -170,9 +178,14 @@ static GK_ID gk_get_image_window(const GK_Display *disp) {
         case GK_MENU_GUESS:     return GK_GUESS_IMAGE;
         case GK_MENU_SUCCESS:   return GK_SUCCESS_IMAGE;
         case GK_MENU_N_SUCCESS: return GK_N_SUCCESS_IMAGE;
+
+        case GK_MENU_START_GUESS:
+        case GK_MENU_ADMIN_MENU:
+        case GK_MENU_EXIT_MENU:
+        case GK_MENU_INIT:
         default:                return GK_INVALID_ID;
     }
-    return ;
+    return GK_INVALID_ID;
 }
 
 // ====================================================================
@@ -277,7 +290,7 @@ void GK_InitDisplay(GK_Display *disp) {
     disp->sys.win = win;
     disp->sys.ren = render;
 
-    gk_load_resources(disp);
+    // gk_load_resources(disp);
     return ;
 }
 
@@ -340,6 +353,10 @@ void GK_DisplayTreeBranch(GK_Display *disp, GK_TreeObject *obj) {
             gk_add_text(disp, (obj->set & GK_TREE_OBJECT_HAVE_TEXT) ? obj->text : "неизвестный объект", text_win);
             break;
 
+        case GK_MENU_START_GUESS:
+        case GK_MENU_ADMIN_MENU:
+        case GK_MENU_EXIT_MENU:
+        case GK_MENU_INIT:
         default:
             break;
     }
@@ -354,10 +371,6 @@ GK_ActionKind GK_PollAction(GK_Display *disp) {
         if (event.type == SDL_QUIT) {
             return GK_ACTION_EXIT;
         }
-
-        // if (disp->data == nullptr) {
-        //     continue;
-        // }
 
         GK_Menu *menu = &disp->menus[disp->cur_menu];
         for (int i = 0; i < menu->size; i++) {
@@ -434,8 +447,9 @@ void GK_Update(GK_Main *app, GK_ActionKind action) {
         case GK_ACTION_ADD_OBJECT:
         case GK_ACTION_CONTROL_RECORD:
         default:
-            return;
+            return ;
     }
+    return ;
 }
 
 void GK_Render(GK_Main *app) {
@@ -482,4 +496,5 @@ void GK_Render(GK_Main *app) {
     }
 
     SDL_RenderPresent(render);
+    return ;
 }

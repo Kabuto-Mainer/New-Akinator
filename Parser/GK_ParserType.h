@@ -12,13 +12,13 @@
 constexpr static int GK_PARSER_MAX_KIND = 64;
 constexpr static int GK_PARSER_MAX_PATH = 256;
 constexpr static int GK_PARSER_MAX_TEXT = 1024;
-constexpr static int GK_PARSER_MAX_FRAMES = 64;
 constexpr static int GK_PARSER_MAX_ITEMS = GK_OBJECT_COUNT;
 
 // ====================================================================
 // STRUCTS
 // ====================================================================
 
+// ------------------------------------------------------------------
 struct GK_Parser {
     char *buffer;
     int cur_p;

@@ -4,7 +4,7 @@
 #include "GK_MusicType.h"
 #include "GK_GraphicType.h"
 #include "GK_TreeType.h"
-
+#include "GK_ParserType.h"
 
 // ====================================================================
 // ENUMS

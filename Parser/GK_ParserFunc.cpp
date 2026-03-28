@@ -10,59 +10,17 @@
 #include "GK_ParserType.h"
 #include "GK_DSLLib.h"
 
-
 // ====================================================================
-// SUPPORT FUNCTIONS
+// DECLARATION SUPPORT FUNCTIONS
 // ====================================================================
 
 // ------------------------------------------------------------------
-static int gk_get_file_size(const char *name) {
-    assert(name);
-
-    struct stat file_stat = {};
-    if (stat(name, &file_stat) == -1)   ExitF("Bad Stat", 0);
-
-    return (int) file_stat.st_size;
-}
+// File support
+static int gk_get_file_size(const char *name);
+static char *gk_create_file_buffer(const char *name, int size);
 
 // ------------------------------------------------------------------
-static char *gk_create_file_buffer(const char *name, int size) {
-    assert(name);
-    assert(size >= 0);
-
-    FILE *stream = fopen(name, "rb");
-    if (stream == NULL) ExitF("NULL File", NULL);
-
-    char *buffer = (char *)calloc(sizeof(char), size + 1);
-    if (buffer == NULL) {
-        fclose(stream);
-        ExitF("NULL Calloc", NULL);
-    }
-
-    fread(buffer, sizeof(char), (size_t)size, stream);
-    fclose(stream);
-
-    return buffer;
-}
-
-// ------------------------------------------------------------------
-static void gk_skip_void(GK_Parser *par) {
-    assert(par);
-
-    int add_ind = 0;
-    while (true) {
-        char sym = par->buffer[par->cur_p + add_ind];
-        if (sym == ' ' || sym == '\n' ) {
-            add_ind++;
-            continue;
-        }
-        break;
-    }
-    par->cur_p += add_ind;
-    return ;
-}
-
-// ------------------------------------------------------------------
+// String processing
 static constexpr uint64_t gk_get_hash(const char *buffer) {
     int idx = 0;
     uint64_t hash = 5137;
@@ -73,50 +31,38 @@ static constexpr uint64_t gk_get_hash(const char *buffer) {
     return hash;
 }
 
-// ----------------------------------------------------------------------
-static inline SDL_Texture *gk_load_texture(SDL_Renderer *render, const char *name) {
-    return IMG_LoadTexture(render, name);
-}
-
 // ------------------------------------------------------------------
+// Texture works
+static inline SDL_Texture *gk_load_texture(SDL_Renderer *render, const char *name);
 static inline SDL_Texture *gk_create_color_texture(SDL_Renderer *render, const SDL_Rect *place,
-            const SDL_Color *color) {
-    assert(render);
-    assert(place);
-    assert(color);
-
-    SDL_Texture *tex = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888,
-        SDL_TEXTUREACCESS_TARGET, place->w, place->h);
-
-    if (tex == NULL) ExitF("NULL Texture", NULL);
-
-    SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderTarget(render, tex);
-    SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(render, color->r, color->g, color->b, color->a);
-    SDL_RenderFillRect(render, NULL);
-    SDL_SetRenderTarget(render, NULL);
-
-    return tex;
-}
+    const SDL_Color *color);
 
 // ------------------------------------------------------------------
-static inline char get_c(GK_Parser *par) {
-    return par->buffer[par->cur_p];
-}
+// Support macros
+static void gk_skip_void(GK_Parser *par);
+static inline char get_c(GK_Parser *par);
+static inline void next_c(GK_Parser *par);
 
 // ------------------------------------------------------------------
-static inline void next_c(GK_Parser *par) {
-    par->cur_p++;
-}
+// Parser config
+static void gk_parse_text(GK_Parser *par);
+static void gk_parse_text_arg(GK_Parser *par, GK_GraphicText *txt);
 
+static void gk_parse_video(GK_Parser *par);
+static void gk_parse_video_arg(GK_Parser *par, GK_GraphicVideo *txt);
+
+static void gk_parse_button(GK_Parser *par);
+static void gk_parse_button_arg(GK_Parser *par, GK_GraphicButton *txt);
+
+static void gk_parse_image(GK_Parser *par);
+static void gk_parse_image_arg(GK_Parser *par, GK_GraphicImage *txt);
 
 // ====================================================================
 // MAIN PARSE FUNCTIONS
 // ====================================================================
 
 // ------------------------------------------------------------------
-void GK_ParseInit(GK_Parser *par, const char *name_file) {
+void GK_ParseInit(GK_Parser *par, SDL_Renderer *render, const char *name_file) {
     assert(par);
 
     int size = gk_get_file_size(name_file);
@@ -133,8 +79,11 @@ void GK_ParseInit(GK_Parser *par, const char *name_file) {
         free(buffer);
         ExitF("NULL Calloc", );
     }
-
     par->pool = pool;
+    par->cur_o = 0;
+
+    par->render = render;
+
     return ;
 }
 
@@ -181,6 +130,96 @@ void GK_ParseDestroy(GK_Parser *par) {
 
     free(par->buffer);
     return ;
+}
+
+
+
+// ====================================================================
+// SUPPORT FUNCTIONS
+// ====================================================================
+
+// ------------------------------------------------------------------
+static int gk_get_file_size(const char *name) {
+    assert(name);
+
+    struct stat file_stat = {};
+    if (stat(name, &file_stat) == -1)   ExitF("Bad Stat", 0);
+
+    return (int) file_stat.st_size;
+}
+
+// ------------------------------------------------------------------
+static char *gk_create_file_buffer(const char *name, int size) {
+    assert(name);
+    assert(size >= 0);
+
+    FILE *stream = fopen(name, "rb");
+    if (stream == NULL) ExitF("NULL File", NULL);
+
+    char *buffer = (char *)calloc((size_t)size + 1, sizeof(char));
+    if (buffer == NULL) {
+        fclose(stream);
+        ExitF("NULL Calloc", NULL);
+    }
+
+    fread(buffer, sizeof(char), (size_t)size, stream);
+    fclose(stream);
+
+    return buffer;
+}
+
+// ------------------------------------------------------------------
+static void gk_skip_void(GK_Parser *par) {
+    assert(par);
+
+    int add_ind = 0;
+    while (true) {
+        char sym = par->buffer[par->cur_p + add_ind];
+        if (sym == ' ' || sym == '\n' ) {
+            add_ind++;
+            continue;
+        }
+        break;
+    }
+    par->cur_p += add_ind;
+    return ;
+}
+
+// ----------------------------------------------------------------------
+static inline SDL_Texture *gk_load_texture(SDL_Renderer *render, const char *name) {
+    return IMG_LoadTexture(render, name);
+}
+
+// ------------------------------------------------------------------
+static inline SDL_Texture *gk_create_color_texture(SDL_Renderer *render, const SDL_Rect *place,
+            const SDL_Color *color) {
+    assert(render);
+    assert(place);
+    assert(color);
+
+    SDL_Texture *tex = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888,
+        SDL_TEXTUREACCESS_TARGET, place->w, place->h);
+
+    if (tex == NULL) ExitF("NULL Texture", NULL);
+
+    SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(render, tex);
+    SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(render, color->r, color->g, color->b, color->a);
+    SDL_RenderFillRect(render, NULL);
+    SDL_SetRenderTarget(render, NULL);
+
+    return tex;
+}
+
+// ------------------------------------------------------------------
+static inline char get_c(GK_Parser *par) {
+    return par->buffer[par->cur_p];
+}
+
+// ------------------------------------------------------------------
+static inline void next_c(GK_Parser *par) {
+    par->cur_p++;
 }
 
 
@@ -298,7 +337,7 @@ static void gk_parse_text_arg(GK_Parser *par, GK_GraphicText *txt) {
             par->cur_p += len;
 
             txt->data.syms = strdup(text_buffer);
-            txt->data.size = strlen(text_buffer);
+            txt->data.size = (int)strlen(text_buffer);
             break;
         }
 
@@ -373,14 +412,14 @@ static void gk_parse_video_arg(GK_Parser *par, GK_GraphicVideo *vid) {
             par->cur_p += len;
 
             vid->size = size;
-            vid->data = (SDL_Texture **)calloc(size, sizeof(SDL_Texture *));
+            vid->data = (SDL_Texture **)calloc((size_t)size, sizeof(SDL_Texture *));
             if (vid->data == NULL) {
                 ExitF("NULL Calloc", );
             }
 
-            len = strlen(path_dir);
+            len = (int)strlen(path_dir);
             for (int i = 0; i < size; i++) {
-                sprintf(path_dir + len, "/%d.png\0", i);
+                sprintf(path_dir + len, "/%d.png", i);
                 SDL_Texture *tex = gk_load_texture(par->render, path_dir);
                 vid->data[i] = tex;
             }
@@ -392,7 +431,7 @@ static void gk_parse_video_arg(GK_Parser *par, GK_GraphicVideo *vid) {
         // ---------------------------------------------------------------
         case gk_get_hash("delay"): {
             uint64_t delay = 0;
-            sscanf(par->buffer + par->cur_p, "%llu %n", &delay, &len);
+            sscanf(par->buffer + par->cur_p, "%lu %n", &delay, &len);
             par->cur_p += len;
 
             vid->delay = delay;
