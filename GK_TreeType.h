@@ -1,7 +1,7 @@
 #ifndef TREE_TYPE_H
 #define TREE_TYPE_H
 
-#include "graphic_type.h"
+#include "GK_GraphicType.h"
 
 enum GK_TreeObjectKind {
     GK_TREE_OBJECT_LEAF,

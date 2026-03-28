@@ -6,27 +6,26 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 
+
+
+typedef int GK_ID;
+
+
+// ====================================================================
+// CONSTANTS
+// ====================================================================
 const static int GK_AMOUNT_MENU = 10;
+constexpr GK_ID GK_INVALID_ID = -1;
+
+// ====================================================================
+// ENUMS
+// ====================================================================
 
 enum GK_GraphicObjectKind {
     GK_GRAPHIC_BUTTON,
     GK_GRAPHIC_TEXT,
     GK_GRAPHIC_VIDEO,
     GK_GRAPHIC_IMAGE
-};
-
-typedef int GK_ID;
-
-struct GK_GraphicObject {
-    GK_GraphicObjectKind kind;
-    GK_ID id;
-    bool must_show;
-    union {
-        GK_GraphicButton *but;
-        GK_GraphicText *text;
-        GK_GraphicVideo *vid;
-        GK_GraphicImage *img;
-    } data;
 };
 
 enum GK_ActionKind {
@@ -43,8 +42,19 @@ enum GK_ActionKind {
     GK_ACTION_CONTROL_RECORD,
 };
 
+enum GK_GraphicTextKind {
+    GK_GRAPHIC_TEXT_KIND_INPUT,
+    GK_GRAPHIC_TEXT_KIND_OUTPUT
+};
+
+// ====================================================================
+// LIBRARY OBJECTS
+// ====================================================================
+
+// ------------------------------------------------------------------
 struct GK_GraphicButton {
     SDL_Rect place;
+
     struct {
         SDL_Texture *pressed;
         SDL_Texture *unpressed;
@@ -56,11 +66,7 @@ struct GK_GraphicButton {
     GK_ActionKind act;
 };
 
-enum GK_GraphicTextKind {
-    GK_GRAPHIC_TEXT_KIND_INPUT,
-    GK_GRAPHIC_TEXT_KIND_OUTPUT
-};
-
+// ------------------------------------------------------------------
 struct GK_GraphicTextObject {
     char *syms;
     int size;
@@ -75,6 +81,7 @@ struct GK_GraphicText {
     GK_GraphicTextObject data;
 };
 
+// ------------------------------------------------------------------
 struct GK_GraphicVideo {
     SDL_Rect place;
     SDL_Texture **data;
@@ -85,21 +92,39 @@ struct GK_GraphicVideo {
     uint64_t last_time;
 };
 
+// ------------------------------------------------------------------
 struct GK_GraphicImage {
     SDL_Rect place;
     SDL_Texture *tex;
 };
 
+
+// ------------------------------------------------------------------
+struct GK_GraphicObject {
+    GK_GraphicObjectKind kind;
+    GK_ID id;
+    bool must_show;
+    union {
+        GK_GraphicButton *but;
+        GK_GraphicText *text;
+        GK_GraphicVideo *vid;
+        GK_GraphicImage *img;
+    } data;
+};
+
+// ------------------------------------------------------------------
 struct GK_ObjectPool {
     GK_GraphicObject *pool;
     int size;
 };
 
+// ------------------------------------------------------------------
 struct GK_Menu {
     GK_ID *data;
     int size;
 };
 
+// ------------------------------------------------------------------
 struct GK_GraphicSystem {
     SDL_Window *win;
     SDL_Renderer *ren;
