@@ -33,7 +33,7 @@ struct GK_TreeObject {
 struct GK_Tree {
     GK_TreeObject *null;
     GK_TreeObject *cur;
-    int size;
 };
+
 
 #endif /* TREE_TYPE_H */

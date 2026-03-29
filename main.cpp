@@ -11,8 +11,12 @@ int GK_SCREEN_WIDTH = 1280;
 int GK_SCREEN_HEIGHT = 720;
 const char *GK_SYSTEM_FONT = "Data/font.ttf";
 extern const SDL_Color GK_FONT_COLOR = {255, 255, 255, 255};
-const char *GK_CONFIG_OBJECT_FILE = "obj.conf";
-const char *GK_CONFIG_MENU_FILE = "menu.conf";
+const char *GK_CONFIG_OBJECT_FILE = "Configs/obj.conf";
+const char *GK_CONFIG_MENU_FILE = "Configs/menu.conf";
+const char *GK_DATA_BASE = "Data/Base/1.conf";
+const char *GK_STD_IMG_DUMP = "Dump/Img/1.png";
+const char *GK_STD_GRAPH_DUMP = "Dump/Graph/1.dot";
+
 
 // ====================================================================
 // FUNCTIONS
@@ -22,6 +26,10 @@ int main() {
     GK_Main app{};
 
     GK_InitTree(&(app.tree));
+    GK_LoadTree(&(app.tree), GK_DATA_BASE);
+
+    GK_TreeDump(&(app.tree));
+
     GK_InitDisplay(&(app.disp));
 
     GK_Parse(&(app.disp));

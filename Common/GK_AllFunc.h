@@ -9,7 +9,7 @@ do {printf("ERROR in %s:%d||%s\n", __FILE__,__LINE__,__text__); \
     return __ret_val__; } while (0)
 // ====================================================================
 
-
+void GK_MainLoop(GK_Main *main_data);
 
 // ====================================================================
 // DISPLAY FUNCTIONS
@@ -30,8 +30,7 @@ void GK_Render(GK_Main *app);
 // ====================================================================
 
 void GK_InitTree(GK_Tree *tree);
-void GK_MainLoop(GK_Main *main_data);
-
+void GK_LoadTree(GK_Tree *tree, const char *name);
 
 // ====================================================================
 // PARSER FUNCTIONS
@@ -46,6 +45,20 @@ void GK_ParseObjectDestroy(GK_ParserObject *par);
 void GK_ParseMenuInit(GK_ParserMenu *par, GK_Menu *menus, const char *name_file);
 void GK_ParseMenuLoop(GK_ParserMenu *par);
 void GK_ParseMenuDestroy(GK_ParserMenu *par);
+
+// ====================================================================
+// SUPPORT FUNCTIONS
+// ====================================================================
+
+int gk_get_file_size(const char *name);
+char *gk_create_file_buffer(const char *name, int size);
+
+// ====================================================================
+// DUMP FUNCTIONS
+// ====================================================================
+
+void GK_TreeDump(GK_Tree *tree);
+void GK_CreateGraph(GK_TreeObject *null, const char *name_dot, const char *name_img);
 
 
 #endif /* GK_ALL_FUNC_H */

@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include <ctype.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 #include "GK_AllFunc.h"
 #include "GK_ParserType.h"
@@ -21,11 +18,6 @@ extern const char *GK_CONFIG_MENU_FILE;
 // ====================================================================
 // DECLARATION SUPPORT FUNCTIONS
 // ====================================================================
-
-// ------------------------------------------------------------------
-// File support
-static int gk_get_file_size(const char *name);
-static char *gk_create_file_buffer(const char *name, int size);
 
 // ------------------------------------------------------------------
 // String processing
@@ -120,6 +112,8 @@ int GK_ParseObjectLoop(GK_ParserObject *par) {
                 par->cur_p++;
             }
             par->cur_p++;
+
+            gk_skip_void(par);
             continue;
         }
 
@@ -247,36 +241,6 @@ void GK_Parse(GK_Display *disp) {
 // ====================================================================
 // SUPPORT FUNCTIONS
 // ====================================================================
-
-// ------------------------------------------------------------------
-static int gk_get_file_size(const char *name) {
-    assert(name);
-
-    struct stat file_stat = {};
-    if (stat(name, &file_stat) == -1)   ExitF("Bad Stat", 0);
-
-    return (int) file_stat.st_size;
-}
-
-// ------------------------------------------------------------------
-static char *gk_create_file_buffer(const char *name, int size) {
-    assert(name);
-    assert(size >= 0);
-
-    FILE *stream = fopen(name, "rb");
-    if (stream == NULL) ExitF("NULL File", NULL);
-
-    char *buffer = (char *)calloc((size_t)size + 1, sizeof(char));
-    if (buffer == NULL) {
-        fclose(stream);
-        ExitF("NULL Calloc", NULL);
-    }
-
-    fread(buffer, sizeof(char), (size_t)size, stream);
-    fclose(stream);
-
-    return buffer;
-}
 
 // ------------------------------------------------------------------
 static void gk_skip_void(GK_ParserObject *par) {
@@ -713,6 +677,8 @@ static void gk_parse_object_button_arg(GK_ParserObject *par, GK_GraphicButton *b
             but->texture.unpressed = gk_load_texture(par->render, path_buffer);
             break;
         }
+
+        // ---------------------------------------------------------------
         case gk_get_hash("action"): {
             int action = 0;
             sscanf(par->buffer + par->cur_p, "%d %n", &action, &len);
@@ -721,6 +687,14 @@ static void gk_parse_object_button_arg(GK_ParserObject *par, GK_GraphicButton *b
             but->act = (GK_ActionKind)action;
             break;
         }
+
+        // ---------------------------------------------------------------
+        case gk_get_hash("switcher"): {
+            but->is_switcher = true;
+            break;
+        }
+
+        // ---------------------------------------------------------------
         case gk_get_hash("data"): {
             gk_skip_void(par);
 

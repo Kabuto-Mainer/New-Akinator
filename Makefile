@@ -12,11 +12,13 @@ sdl2 =  -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 graphic = Graphic/GK_GraphicFunc.cpp
 parser 	= Parser/GK_ParserFunc.cpp
 tree 	= Tree/GK_TreeFunc.cpp
+support = Support/GK_SupportFunc.cpp
+dump	= Dump/GK_DumpFunc.cpp
 
 main 	= main.cpp
 
 # -------------------------------------------------------------------
-debug_files 	= $(graphic) $(parser) $(tree) $(main)
+debug_files 	= $(graphic) $(parser) $(tree) $(main) $(support) $(dump)
 
 
 # ===================================================================
@@ -26,10 +28,12 @@ graphic_dir = Graphic
 parser_dir	= Parser
 tree_dir	= Tree
 music_dir	= Music
-source_dir 	= Source
+common_dir 	= Common
+config_dir	= Configs
+dump_dir	= Dump
 
 # -------------------------------------------------------------------
-debug_dir_flags	= -I$(graphic_dir) -I$(parser_dir) -I$(tree_dir) -I$(source_dir) -I$(music_dir)
+debug_dir_flags	= -I$(graphic_dir) -I$(parser_dir) -I$(tree_dir) -I$(common_dir) -I$(music_dir) -I$(config_dir) -I$(dump_dir)
 
 # ===================================================================
 # BUILDS

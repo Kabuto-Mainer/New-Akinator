@@ -62,6 +62,7 @@ struct GK_GraphicButton {
 
     bool is_pressed;
     bool is_hovered;
+    bool is_switcher;
 
     GK_ActionKind act;
 };

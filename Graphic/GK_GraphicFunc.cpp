@@ -52,9 +52,16 @@ static GK_ActionKind gk_check_click_button(SDL_Event *event, GK_GraphicButton *b
         but->is_hovered = gk_point_in_rect(event->motion.x, event->motion.y, but->place);
         return GK_ACTION_NONE;
     }
-
     if (event->type != SDL_MOUSEBUTTONDOWN ||
         event->button.button != SDL_BUTTON_LEFT) {
+        return GK_ACTION_NONE;
+    }
+
+    if (but->is_switcher == true) {
+        if (gk_point_in_rect(event->button.x, event->button.y, but->place)) {
+            but->is_pressed = !but->is_pressed;
+            return but->act;
+        }
         return GK_ACTION_NONE;
     }
 
@@ -207,7 +214,7 @@ static SDL_Surface *gk_render_multiline_text(TTF_Font *font, const char *text) {
     int line_height = TTF_FontHeight(font);
     char *text_copy = strdup(text);
     char *saveptr = NULL;
-    char *line = strtok_r(text_copy, "\n", &saveptr);
+    char *line = strtok_r(text_copy, "$", &saveptr);
 
     while (line != NULL) {
         int w = 0, h = 0;
@@ -269,15 +276,17 @@ static void gk_render_text(SDL_Renderer *render, TTF_Font *font, GK_GraphicText 
     SDL_Surface *surface = gk_render_multiline_text(font, txt->data.syms);
 
     SDL_Texture *texture = SDL_CreateTextureFromSurface(render, surface);
-    SDL_Rect dst = txt->place;
+    SDL_Rect dst = {};
+    dst.w = surface->w;
+    dst.h = surface->h;
 
     dst.x = txt->place.x + (txt->place.w - surface->w) / 2;
     dst.y = txt->place.y + (txt->place.h - surface->h) / 2;
 
-    /* if (dst.w <= 0) */ dst.w = surface->w;
-    /* if (dst.h <= 0) */ dst.h = surface->h;
+/* if (dst.w <= 0)  dst.w = surface->w; */
+/* if (dst.h <= 0)  dst.h = surface->h; */
 
-    SDL_RenderCopy(render, texture, nullptr, &dst);
+    SDL_RenderCopy(render, texture, NULL, &dst);
 
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
@@ -296,10 +305,12 @@ static void gk_render_button(SDL_Renderer *render, TTF_Font *font, GK_GraphicBut
     if (but->text != NULL) {
         SDL_Surface *surface = gk_render_multiline_text(font, but->text);
         SDL_Texture *texture = SDL_CreateTextureFromSurface(render, surface);
-        SDL_Rect dst = but->place;
+        SDL_Rect dst = {};
+        dst.w = surface->w;
+        dst.h = surface->h;
 
-        if (dst.w <= 0) dst.w = surface->w;
-        if (dst.h <= 0) dst.h = surface->h;
+        dst.x = but->place.x + (but->place.w - surface->w) / 2;
+        dst.y = but->place.y + (but->place.h - surface->h) / 2;
 
         SDL_RenderCopy(render, texture, NULL, &dst);
 
@@ -356,7 +367,7 @@ void GK_InitDisplay(GK_Display *disp) {
     SDL_Renderer *render = SDL_CreateRenderer(win, -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-    TTF_Font *font = TTF_OpenFont(GK_SYSTEM_FONT, 24);
+    TTF_Font *font = TTF_OpenFont(GK_SYSTEM_FONT, 30);
 
     disp->sys.font = font;
     disp->sys.win = win;
@@ -463,6 +474,7 @@ GK_ActionKind GK_PollAction(GK_Display *disp) {
 
             const GK_ActionKind action = gk_check_click_button(&event, obj->data.but);
             if (action != GK_ACTION_NONE) {
+                printf("ACTION %d\n", (int) action);
                 return action;
             }
         }
@@ -482,7 +494,7 @@ void GK_Update(GK_Main *app, GK_ActionKind action) {
         case GK_ACTION_BEGIN_GUESS:
             app->tree.cur = app->tree.null;
             app->disp.cur_menu = GK_MENU_GUESS;
-            GK_DisplayTreeBranch(&app->disp, app->tree.cur);
+            // GK_DisplayTreeBranch(&app->disp, app->tree.cur);
             return ;
 
         case GK_ACTION_OPEN_ADMIN:
