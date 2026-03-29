@@ -187,7 +187,16 @@ void GK_ParseMenuLoop(GK_ParserMenu *par) {
     int value = 0;
 
     gk_skip_void(par);
-    while (get_c(par) == '|' && par->cur_p < par->size) {
+    while ((get_c(par) == '|' && par->cur_p < par->size) || get_c(par) == '#') {
+        if (get_c(par) == '#') {
+            while (get_c(par) != '\n') {
+                par->cur_p++;
+            }
+            par->cur_p++;
+            gk_skip_void(par);
+            continue;
+        }
+
         next_c(par);
 
         while (get_c(par) != '|') {
@@ -555,7 +564,7 @@ static void gk_parse_object_video_arg(GK_ParserObject *par, GK_GraphicVideo *vid
             par->cur_p += len;
 
             vid->size = size;
-            vid->data = (SDL_Texture **)calloc((size_t)size + 1, sizeof(SDL_Texture *));
+            vid->data = (SDL_Texture **)calloc((size_t)size, sizeof(SDL_Texture *));
             if (vid->data == NULL) {
                 ExitF("NULL Calloc", );
             }
@@ -712,7 +721,18 @@ static void gk_parse_object_button_arg(GK_ParserObject *par, GK_GraphicButton *b
             but->act = (GK_ActionKind)action;
             break;
         }
+        case gk_get_hash("data"): {
+            gk_skip_void(par);
 
+            char text_buffer[GK_PARSER_MAX_TEXT] = "";
+            sscanf(par->buffer + par->cur_p, "\"%[^\"]\" %n", text_buffer, &len);
+            par->cur_p += len;
+
+            but->text = strdup(text_buffer);
+            // but.->data.syms = strdup(text_buffer);
+            // but.->data.size = (int)strlen(text_buffer);
+            break;
+        }
         // ---------------------------------------------------------------
         default:
             ExitF("Unknown word in config", );

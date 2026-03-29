@@ -192,6 +192,61 @@ static GK_ID gk_get_image_window(const GK_Display *disp) {
 // RENDER FUNCTIONS
 // ====================================================================
 
+static SDL_Surface *gk_render_multiline_text(TTF_Font *font, const char *text) {
+    assert(font);
+    assert(text);
+
+    /* Count lines */
+    int line_count = 1;
+    for (const char *p = text; *p; p++) {
+        if (*p == '$') line_count++;
+    }
+
+    /* Find max width and line height */
+    int max_width = 0;
+    int line_height = TTF_FontHeight(font);
+    char *text_copy = strdup(text);
+    char *saveptr = NULL;
+    char *line = strtok_r(text_copy, "\n", &saveptr);
+
+    while (line != NULL) {
+        int w = 0, h = 0;
+        TTF_SizeUTF8(font, line, &w, &h);
+        if (w > max_width) max_width = w;
+        line = strtok_r(NULL, "$", &saveptr);
+    }
+    free(text_copy);
+
+    /* Create final surface */
+    int total_height = line_height * line_count;
+    SDL_Surface *final_sur = SDL_CreateRGBSurfaceWithFormat(0,
+        max_width, total_height, 32, SDL_PIXELFORMAT_RGBA8888);
+    if (final_sur == NULL) return NULL;
+
+    /* Fill with transparent background */
+    SDL_FillRect(final_sur, NULL, SDL_MapRGBA(final_sur->format, 0, 0, 0, 0));
+
+    /* Render each line */
+    int y_offset = 0;
+    text_copy = strdup(text);
+    line = strtok_r(text_copy, "$", &saveptr);
+
+    while (line != NULL) {
+        SDL_Surface *line_sur = TTF_RenderUTF8_Blended(font, line, GK_FONT_COLOR);
+        if (line_sur) {
+            SDL_Rect dest = {0, y_offset, line_sur->w, line_sur->h};
+            SDL_BlitSurface(line_sur, NULL, final_sur, &dest);
+            SDL_FreeSurface(line_sur);
+            y_offset += line_height;
+        }
+        line = strtok_r(NULL, "$", &saveptr);
+    }
+    free(text_copy);
+
+    return final_sur;
+}
+
+
 // ----------------------------------------------------------------------
 static void gk_render_text(SDL_Renderer *render, TTF_Font *font, GK_GraphicText *txt) {
     assert(render);
@@ -207,16 +262,20 @@ static void gk_render_text(SDL_Renderer *render, TTF_Font *font, GK_GraphicText 
         return;
     }
 
-    const Uint32 wrap_width = (txt->place.w > 0) ? (Uint32)txt->place.w : 0;
+    // const Uint32 wrap_width = (txt->place.w > 0) ? (Uint32)txt->place.w : 0;
+    // SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, text,
+    //     GK_FONT_COLOR, wrap_width);
 
-    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, text,
-        GK_FONT_COLOR, wrap_width);
+    SDL_Surface *surface = gk_render_multiline_text(font, txt->data.syms);
 
     SDL_Texture *texture = SDL_CreateTextureFromSurface(render, surface);
     SDL_Rect dst = txt->place;
 
-    if (dst.w <= 0) dst.w = surface->w;
-    if (dst.h <= 0) dst.h = surface->h;
+    dst.x = txt->place.x + (txt->place.w - surface->w) / 2;
+    dst.y = txt->place.y + (txt->place.h - surface->h) / 2;
+
+    /* if (dst.w <= 0) */ dst.w = surface->w;
+    /* if (dst.h <= 0) */ dst.h = surface->h;
 
     SDL_RenderCopy(render, texture, nullptr, &dst);
 
@@ -226,15 +285,28 @@ static void gk_render_text(SDL_Renderer *render, TTF_Font *font, GK_GraphicText 
 }
 
 // ----------------------------------------------------------------------
-static void gk_render_button(SDL_Renderer *render, GK_GraphicButton *but) {
+static void gk_render_button(SDL_Renderer *render, TTF_Font *font, GK_GraphicButton *but) {
     assert(render);
     assert(but);
 
-    SDL_Texture *tex = but->is_pressed ? but->texture.pressed : but->texture.unpressed;
+    SDL_Texture *tex = (but->is_pressed | but->is_hovered) ? but->texture.pressed : but->texture.unpressed;
     if (tex != NULL) {
         SDL_RenderCopy(render, tex, nullptr, &but->place);
-        return ;
     }
+    if (but->text != NULL) {
+        SDL_Surface *surface = gk_render_multiline_text(font, but->text);
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(render, surface);
+        SDL_Rect dst = but->place;
+
+        if (dst.w <= 0) dst.w = surface->w;
+        if (dst.h <= 0) dst.h = surface->h;
+
+        SDL_RenderCopy(render, texture, NULL, &dst);
+
+        SDL_DestroyTexture(texture);
+        SDL_FreeSurface(surface);
+    }
+    return ;
 
     // Default settings
     SDL_SetRenderDrawColor(render, 80, 80, 80, 255);
@@ -363,6 +435,7 @@ void GK_DisplayTreeBranch(GK_Display *disp, GK_TreeObject *obj) {
     return ;
 }
 
+// ----------------------------------------------------------------------
 GK_ActionKind GK_PollAction(GK_Display *disp) {
     assert(disp);
 
@@ -398,6 +471,7 @@ GK_ActionKind GK_PollAction(GK_Display *disp) {
     return GK_ACTION_NONE;
 }
 
+// ----------------------------------------------------------------------
 void GK_Update(GK_Main *app, GK_ActionKind action) {
     assert(app);
 
@@ -456,6 +530,7 @@ void GK_Update(GK_Main *app, GK_ActionKind action) {
     return ;
 }
 
+// ----------------------------------------------------------------------
 void GK_Render(GK_Main *app) {
     assert(app);
 
@@ -477,7 +552,7 @@ void GK_Render(GK_Main *app) {
 
         switch (obj->kind) {
             case GK_GRAPHIC_BUTTON:
-                gk_render_button(render, obj->data.but);
+                gk_render_button(render, app->disp.sys.font, obj->data.but);
                 break;
 
             case GK_GRAPHIC_IMAGE:

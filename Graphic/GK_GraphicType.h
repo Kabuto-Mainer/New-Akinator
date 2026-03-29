@@ -53,11 +53,12 @@ enum GK_GraphicTextKind {
 // ------------------------------------------------------------------
 struct GK_GraphicButton {
     SDL_Rect place;
-
     struct {
         SDL_Texture *pressed;
         SDL_Texture *unpressed;
     } texture;
+
+    char *text;
 
     bool is_pressed;
     bool is_hovered;
