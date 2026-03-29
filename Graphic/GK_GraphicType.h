@@ -14,6 +14,7 @@ typedef int GK_ID;
 // CONSTANTS
 // ====================================================================
 const static int GK_AMOUNT_MENU = 10;
+constexpr static int GK_MAX_INPUT = 128;
 constexpr GK_ID GK_INVALID_ID = -1;
 
 // ====================================================================
@@ -29,21 +30,36 @@ enum GK_GraphicObjectKind {
 
 enum GK_ActionKind {
     GK_ACTION_NONE,
+
     GK_ACTION_BEGIN_GUESS,
     GK_ACTION_OPEN_ADMIN,
+
     GK_ACTION_EXIT,
+
     GK_ACTION_ANSWER_YES,
     GK_ACTION_ANSWER_NO,
+
     GK_ACTION_RETURN_TO_MENU,
+
     GK_ACTION_LOAD_DATA,
     GK_ACTION_UPLOAD_DATA,
+
     GK_ACTION_ADD_OBJECT,
     GK_ACTION_CONTROL_RECORD,
+
+    GK_ACTION_INPUT_CHANGED,
+    GK_ACTION_INPUT_SUBMIT,
+    GK_ACTION_INPUT_CANCEL,
 };
 
 enum GK_GraphicTextKind {
     GK_GRAPHIC_TEXT_KIND_OUTPUT,
     GK_GRAPHIC_TEXT_KIND_INPUT,
+};
+
+enum GK_InputMode {
+    GK_INPUT_NONE,
+    GK_INPUT_TEXT
 };
 
 // ====================================================================
@@ -131,6 +147,16 @@ struct GK_GraphicSystem {
     SDL_Window *win;
     SDL_Renderer *ren;
     TTF_Font *font;
+};
+
+struct GK_TextInput {
+    char buffer[128];
+    int size;
+    int max_size;
+    int cursor;
+
+    bool is_active;
+    bool is_hidden;
 };
 
 #endif /* GK_GRAPHIC_TYPE_H */

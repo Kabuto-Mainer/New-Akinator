@@ -18,6 +18,7 @@ enum GK_MenuKind {
     GK_MENU_SUCCESS,
     GK_MENU_N_SUCCESS,
     GK_MENU_ADMIN_MENU,
+    GK_MENU_ADD_MENU,
     GK_MENU_EXIT_MENU,
 };
 
@@ -29,6 +30,8 @@ enum GK_MenuKind {
 struct GK_Display {
     GK_GraphicSystem sys;
     GK_ObjectPool data;
+    GK_TextInput text_inp;
+
     GK_Menu menus[GK_AMOUNT_MENU];
     GK_MenuKind cur_menu;
     GK_Music music;
