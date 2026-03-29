@@ -42,8 +42,8 @@ enum GK_ActionKind {
 };
 
 enum GK_GraphicTextKind {
+    GK_GRAPHIC_TEXT_KIND_OUTPUT,
     GK_GRAPHIC_TEXT_KIND_INPUT,
-    GK_GRAPHIC_TEXT_KIND_OUTPUT
 };
 
 // ====================================================================

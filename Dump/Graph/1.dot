@@ -7,9 +7,9 @@ digraph {
   node [shape=plaintext, style=filled, fontname="Helvetica"];
   edge [arrowhead=vee, arrowsize=0.6, penwidth=1.2];
 
-block_0x7b9fe23e0110 [label=<
+block_0x7b49e49e0110 [label=<
 <TABLE CELLSPACING="0" CELLPADDING="4">
-<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7b9fe23e0110</B></TD></TR>
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7b49e49e0110</B></TD></TR>
 <TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Арнольд</TD></TR>
 <TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">LEAF</TD></TR>
 <TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
@@ -19,9 +19,9 @@ block_0x7b9fe23e0110 [label=<
 </TR>
 </TABLE> >];
 
-block_0x7b9fe23e0150 [label=<
+block_0x7b49e49e0150 [label=<
 <TABLE CELLSPACING="0" CELLPADDING="4">
-<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7b9fe23e0150</B></TD></TR>
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7b49e49e0150</B></TD></TR>
 <TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Щврацеniger</TD></TR>
 <TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">LEAF</TD></TR>
 <TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
@@ -31,19 +31,19 @@ block_0x7b9fe23e0150 [label=<
 </TR>
 </TABLE> >];
 
-block_0x7b9fe23e00d0 [label=<
+block_0x7b49e49e00d0 [label=<
 <TABLE CELLSPACING="0" CELLPADDING="4">
-<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7b9fe23e00d0</B></TD></TR>
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7b49e49e00d0</B></TD></TR>
 <TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Это человек?</TD></TR>
 <TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">BRANCH</TD></TR>
 <TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
 <TR>
-<TD PORT="no" BGCOLOR="#ff7301ff">0x7b9fe23e0110</TD>
-<TD PORT="yes" BGCOLOR="#08ff3aff">0x7b9fe23e0150</TD>
+<TD PORT="no" BGCOLOR="#ff7301ff">0x7b49e49e0110</TD>
+<TD PORT="yes" BGCOLOR="#08ff3aff">0x7b49e49e0150</TD>
 </TR>
 </TABLE> >];
 
-block_0x7b9fe23e00d0:no -> block_0x7b9fe23e0110:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
-block_0x7b9fe23e00d0:yes -> block_0x7b9fe23e0150:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
+block_0x7b49e49e00d0:no -> block_0x7b49e49e0110:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
+block_0x7b49e49e00d0:yes -> block_0x7b49e49e0150:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
 
 }

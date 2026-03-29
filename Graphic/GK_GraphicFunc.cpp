@@ -77,27 +77,33 @@ static void gk_add_text(GK_Display *disp, const char *text, GK_ID id) {
     assert(text);
     if (id < 0 || id >= disp->data.size)  ExitF("Bad ID", );
 
+    printf("ADD TEXT \nINPUT:%s  \nBEFORE:  %s\n", text, disp->data.pool[id].data.text->data.syms);
     GK_GraphicObject *obj = &(disp->data.pool[id]);
-    if (obj->kind != GK_GRAPHIC_TEXT || obj->data.text == nullptr) {
-        return;
+    if (obj->kind != GK_GRAPHIC_TEXT) {
+        return ;
     }
     if (obj->data.text->kind != GK_GRAPHIC_TEXT_KIND_OUTPUT) {
-        return;
+        return ;
     }
 
+    // printf("ADD TEXT \nINPUT:%s  \nBEFORE:  %s\n", text, disp->data.pool[id].data.text->data.syms);
     GK_GraphicText *txt = obj->data.text;
-    const size_t old_len = txt->data.syms ? strlen(txt->data.syms) : 0;
+    size_t old_len = txt->data.syms ? strlen(txt->data.syms) : 0;
     const size_t add_len = strlen(text);
+
+    printf("OLD: %zu\nNEW: %zu\n", old_len, add_len);
 
     char *buffer = txt->data.syms;
     if (old_len == 0) {
-        buffer = (char *)calloc(add_len, sizeof(char));
+        old_len = 1;
+        buffer = (char *)calloc(add_len + 2, sizeof(char));
     } else {
         buffer = (char *)realloc(buffer, add_len + (size_t)txt->data.size);
     }
+
     if (buffer == NULL) ExitF("NULL allocate", );
 
-    memcpy(buffer + old_len, text, add_len + 1);
+    memcpy(buffer + old_len - 1, text, add_len + 1);
     txt->data.syms = buffer;
     txt->data.size = (int)(old_len + add_len);
     return ;
@@ -168,7 +174,7 @@ static GK_ID gk_get_text_window(const GK_Display *disp) {
         case GK_MENU_SUCCESS:   return GK_SUCCESS_MAIN_TEXT;
         case GK_MENU_N_SUCCESS: return GK_N_SUCCESS_MAIN_TEXT;
 
-        case GK_MENU_START_GUESS:
+        case GK_MENU_START_GUESS:   return GK_START_GUESS_MAIN_TEXT;
         case GK_MENU_ADMIN_MENU:
         case GK_MENU_EXIT_MENU:
         case GK_MENU_INIT:
@@ -418,16 +424,14 @@ void GK_DisplayTreeBranch(GK_Display *disp, GK_TreeObject *obj) {
 
     switch (disp->cur_menu) {
         case GK_MENU_GUESS:
-            gk_add_text(disp, "Это ", text_win);
             gk_add_text(disp, (obj->set & GK_TREE_OBJECT_HAVE_TEXT) ? obj->text : "неизвестный объект", text_win);
-            gk_add_text(disp, "?", text_win);
             if ((obj->set & GK_TREE_OBJECT_HAVE_IMAGE) && obj->files.img != nullptr) {
                 gk_add_image(disp, obj->files.img, img_win);
             }
             break;
 
         case GK_MENU_SUCCESS:
-            gk_add_text(disp, "Я угадал? Это: ", text_win);
+            gk_add_text(disp, "Я думаю, это:  ", text_win);
             gk_add_text(disp, (obj->set & GK_TREE_OBJECT_HAVE_TEXT) ? obj->text : "неизвестный объект", text_win);
             break;
 
@@ -494,26 +498,30 @@ void GK_Update(GK_Main *app, GK_ActionKind action) {
         case GK_ACTION_BEGIN_GUESS:
             app->tree.cur = app->tree.null;
             app->disp.cur_menu = GK_MENU_GUESS;
-            // GK_DisplayTreeBranch(&app->disp, app->tree.cur);
+            GK_DisplayTreeBranch(&app->disp, app->tree.cur);
             return ;
 
         case GK_ACTION_OPEN_ADMIN:
             app->disp.cur_menu = GK_MENU_ADMIN_MENU;
             return ;
 
-        case GK_ACTION_RETURN_TO_MENU:
+        case GK_ACTION_RETURN_TO_MENU: {
             app->disp.cur_menu = GK_MENU_START_GUESS;
+            GK_ID text_id = gk_get_text_window(&(app->disp));
+            gk_clear_text(&(app->disp), text_id);
+            gk_add_text(&(app->disp), "Приветствуем тебя в нашей программе Акинатор", text_id);
             return ;
+        }
 
         case GK_ACTION_ANSWER_YES:
             if (app->tree.cur == NULL) {
                 return ;
             }
-            if (app->tree.cur->kind == GK_TREE_OBJECT_LEAF) {
+
+            if (app->tree.cur->branch.yes->kind == GK_TREE_OBJECT_LEAF) {
                 app->disp.cur_menu = GK_MENU_SUCCESS;
-                GK_DisplayTreeBranch(&app->disp, app->tree.cur);
-                return ;
             }
+
             app->tree.cur = app->tree.cur->branch.yes;
             GK_DisplayTreeBranch(&app->disp, app->tree.cur);
             return ;
@@ -522,11 +530,11 @@ void GK_Update(GK_Main *app, GK_ActionKind action) {
             if (app->tree.cur == NULL) {
                 return ;
             }
-            if (app->tree.cur->kind == GK_TREE_OBJECT_LEAF) {
-                app->disp.cur_menu = GK_MENU_N_SUCCESS;
-                GK_DisplayTreeBranch(&app->disp, app->tree.cur);
-                return ;
+
+            if (app->tree.cur->branch.no->kind == GK_TREE_OBJECT_LEAF) {
+                app->disp.cur_menu = GK_MENU_SUCCESS;
             }
+
             app->tree.cur = app->tree.cur->branch.no;
             GK_DisplayTreeBranch(&app->disp, app->tree.cur);
             return ;
