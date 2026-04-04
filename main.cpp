@@ -28,7 +28,7 @@ int main() {
     GK_InitTree(&(app.tree));
     GK_LoadTree(&(app.tree), GK_DATA_BASE);
 
-    GK_TreeDump(&(app.tree));
+    // GK_TreeDump(&(app.tree));
 
     GK_InitDisplay(&(app.disp));
 

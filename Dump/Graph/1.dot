@@ -7,10 +7,10 @@ digraph {
   node [shape=plaintext, style=filled, fontname="Helvetica"];
   edge [arrowhead=vee, arrowsize=0.6, penwidth=1.2];
 
-block_0x7c126a3e0110 [label=<
+block_0x7bad349e0150 [label=<
 <TABLE CELLSPACING="0" CELLPADDING="4">
-<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7c126a3e0110</B></TD></TR>
-<TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Арнольд</TD></TR>
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7bad349e0150</B></TD></TR>
+<TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Сурок</TD></TR>
 <TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">LEAF</TD></TR>
 <TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
 <TR>
@@ -19,10 +19,10 @@ block_0x7c126a3e0110 [label=<
 </TR>
 </TABLE> >];
 
-block_0x7c126a3e0150 [label=<
+block_0x7bad349e0190 [label=<
 <TABLE CELLSPACING="0" CELLPADDING="4">
-<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7c126a3e0150</B></TD></TR>
-<TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Щврацеniger</TD></TR>
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7bad349e0190</B></TD></TR>
+<TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Координально Атличный Арифметик</TD></TR>
 <TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">LEAF</TD></TR>
 <TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
 <TR>
@@ -31,19 +31,71 @@ block_0x7c126a3e0150 [label=<
 </TR>
 </TABLE> >];
 
-block_0x7c126a3e00d0 [label=<
+block_0x7bad349e0110 [label=<
 <TABLE CELLSPACING="0" CELLPADDING="4">
-<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7c126a3e00d0</B></TD></TR>
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7bad349e0110</B></TD></TR>
+<TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Это животное?</TD></TR>
+<TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">BRANCH</TD></TR>
+<TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
+<TR>
+<TD PORT="no" BGCOLOR="#ff7301ff">0x7bad349e0150</TD>
+<TD PORT="yes" BGCOLOR="#08ff3aff">0x7bad349e0190</TD>
+</TR>
+</TABLE> >];
+
+block_0x7bad349e0210 [label=<
+<TABLE CELLSPACING="0" CELLPADDING="4">
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7bad349e0210</B></TD></TR>
+<TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Sweety Fox</TD></TR>
+<TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">LEAF</TD></TR>
+<TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
+<TR>
+<TD PORT="no" BGCOLOR="#ff7301ff"></TD>
+<TD PORT="yes" BGCOLOR="#08ff3aff"></TD>
+</TR>
+</TABLE> >];
+
+block_0x7bad349e0250 [label=<
+<TABLE CELLSPACING="0" CELLPADDING="4">
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7bad349e0250</B></TD></TR>
+<TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Арнольд Шварцнейгер</TD></TR>
+<TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">LEAF</TD></TR>
+<TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
+<TR>
+<TD PORT="no" BGCOLOR="#ff7301ff"></TD>
+<TD PORT="yes" BGCOLOR="#08ff3aff"></TD>
+</TR>
+</TABLE> >];
+
+block_0x7bad349e01d0 [label=<
+<TABLE CELLSPACING="0" CELLPADDING="4">
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7bad349e01d0</B></TD></TR>
+<TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Это мужчина?</TD></TR>
+<TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">BRANCH</TD></TR>
+<TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
+<TR>
+<TD PORT="no" BGCOLOR="#ff7301ff">0x7bad349e0210</TD>
+<TD PORT="yes" BGCOLOR="#08ff3aff">0x7bad349e0250</TD>
+</TR>
+</TABLE> >];
+
+block_0x7bad349e00d0 [label=<
+<TABLE CELLSPACING="0" CELLPADDING="4">
+<TR><TD PORT="root" BGCOLOR="#0308f9ff" COLSPAN="2"><B>0x7bad349e00d0</B></TD></TR>
 <TR><TD BGCOLOR="#f46b8bff" COLSPAN="2">Это человек?</TD></TR>
 <TR><TD BGCOLOR="#2ffcdd" COLSPAN="2">BRANCH</TD></TR>
 <TR><TD BGCOLOR="#ff7301ff">NO</TD><TD BGCOLOR="#08ff3aff">YES</TD></TR>
 <TR>
-<TD PORT="no" BGCOLOR="#ff7301ff">0x7c126a3e0110</TD>
-<TD PORT="yes" BGCOLOR="#08ff3aff">0x7c126a3e0150</TD>
+<TD PORT="no" BGCOLOR="#ff7301ff">0x7bad349e0110</TD>
+<TD PORT="yes" BGCOLOR="#08ff3aff">0x7bad349e01d0</TD>
 </TR>
 </TABLE> >];
 
-block_0x7c126a3e00d0:no -> block_0x7c126a3e0110:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
-block_0x7c126a3e00d0:yes -> block_0x7c126a3e0150:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
+block_0x7bad349e0110:no -> block_0x7bad349e0150:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
+block_0x7bad349e0110:yes -> block_0x7bad349e0190:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
+block_0x7bad349e00d0:no -> block_0x7bad349e0110:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
+block_0x7bad349e01d0:no -> block_0x7bad349e0210:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
+block_0x7bad349e01d0:yes -> block_0x7bad349e0250:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
+block_0x7bad349e00d0:yes -> block_0x7bad349e01d0:root [color="#2bf349", penwidth = 1.5, arrowsize = 0.6, constraint = true];
 
 }

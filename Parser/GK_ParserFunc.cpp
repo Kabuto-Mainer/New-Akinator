@@ -20,18 +20,6 @@ extern const char *GK_CONFIG_MENU_FILE;
 // ====================================================================
 
 // ------------------------------------------------------------------
-// String processing
-static constexpr uint64_t gk_get_hash(const char *buffer) {
-    int idx = 0;
-    uint64_t hash = 5137;
-
-    while (buffer[idx] != '\0') {
-        hash = hash * 33 + (uint64_t)(buffer[idx++]);
-    }
-    return hash;
-}
-
-// ------------------------------------------------------------------
 // Texture works
 static inline SDL_Texture *gk_load_texture(SDL_Renderer *render, const char *name);
 static inline SDL_Texture *gk_create_color_texture(SDL_Renderer *render, const SDL_Rect *place,

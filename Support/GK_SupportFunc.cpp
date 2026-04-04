@@ -7,8 +7,6 @@
 
 #include "GK_AllFunc.h"
 
-
-
 // ------------------------------------------------------------------
 int gk_get_file_size(const char *name) {
     assert(name);

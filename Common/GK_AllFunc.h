@@ -18,7 +18,7 @@ void GK_MainLoop(GK_Main *main_data);
 void GK_InitDisplay(GK_Display *disp);
 void GK_DestroyDisplay(GK_Display *disp);
 
-void GK_DisplayTreeBranch(GK_Display *disp, GK_TreeObject *obj);
+// void GK_DisplayTreeBranch(GK_Display *disp, GK_TreeObject *obj);
 GK_ActionKind GK_PollAction(GK_Display *disp);
 
 void GK_Update(GK_Main *app, GK_ActionKind action);
@@ -31,6 +31,9 @@ void GK_Render(GK_Main *app);
 
 void GK_InitTree(GK_Tree *tree);
 void GK_LoadTree(GK_Tree *tree, const char *name);
+
+// GK_TreeObject *GK_TreeCreateObject(const char *text);
+// void GK_TreeMoveData(GK_TreeObject *first, GK_TreeObject *second);
 
 // ====================================================================
 // PARSER FUNCTIONS
@@ -52,13 +55,22 @@ void GK_ParseMenuDestroy(GK_ParserMenu *par);
 
 int gk_get_file_size(const char *name);
 char *gk_create_file_buffer(const char *name, int size);
+constexpr uint64_t gk_get_hash(const char *buffer) {
+    int idx = 0;
+    uint64_t hash = 5137;
+
+    while (buffer[idx] != '\0') {
+        hash = hash * 33 + (uint64_t)(buffer[idx++]);
+    }
+    return hash;
+}
 
 // ====================================================================
 // DUMP FUNCTIONS
 // ====================================================================
 
-void GK_TreeDump(GK_Tree *tree);
-void GK_CreateGraph(GK_TreeObject *null, const char *name_dot, const char *name_img);
+// void GK_TreeDump(GK_Tree *tree);
+// void GK_CreateGraph(GK_TreeObject *null, const char *name_dot, const char *name_img);
 
 
 #endif /* GK_ALL_FUNC_H */

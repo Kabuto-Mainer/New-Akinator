@@ -4,6 +4,7 @@
 
 #include "GK_DSLLib.h"
 #include "GK_AllFunc.h"
+#include "GK_GraphicSystemFunc.h"
 
 // ====================================================================
 // USED CONSTANTS
@@ -12,6 +13,7 @@ extern int GK_SCREEN_WIDTH;
 extern int GK_SCREEN_HEIGHT;
 extern const char *GK_SYSTEM_FONT;
 extern const SDL_Color GK_FONT_COLOR;
+
 
 // ====================================================================
 // SUPPORT FUNCTIONS
@@ -43,7 +45,7 @@ static inline bool gk_point_in_rect(int x, int y, const SDL_Rect &rect) {
 }
 
 // ----------------------------------------------------------------------
-static GK_ActionKind gk_check_click_button(SDL_Event *event, GK_GraphicButton *but) {
+GK_ActionKind gk_check_click_button(SDL_Event *event, GK_GraphicButton *but) {
     assert(event);
     assert(but);
 
@@ -72,12 +74,12 @@ static GK_ActionKind gk_check_click_button(SDL_Event *event, GK_GraphicButton *b
 }
 
 // ----------------------------------------------------------------------
-static void gk_add_text(GK_Display *disp, const char *text, GK_ID id) {
+void gk_add_text(GK_Display *disp, const char *text, GK_ID id) {
     assert(disp);
     assert(text);
     if (id < 0 || id >= disp->data.size)  ExitF("Bad ID", );
 
-    printf("ADD TEXT \nINPUT:%s  \nBEFORE:  %s\n", text, disp->data.pool[id].data.text->data.syms);
+    // printf("ADD TEXT \nINPUT:%s  \nBEFORE:  %s\n", text, disp->data.pool[id].data.text->data.syms);
     GK_GraphicObject *obj = &(disp->data.pool[id]);
     if (obj->kind != GK_GRAPHIC_TEXT) {
         return ;
@@ -91,7 +93,7 @@ static void gk_add_text(GK_Display *disp, const char *text, GK_ID id) {
     size_t old_len = txt->data.syms ? strlen(txt->data.syms) : 0;
     const size_t add_len = strlen(text);
 
-    printf("OLD: %zu\nNEW: %zu\n", old_len, add_len);
+    // printf("OLD: %zu\nNEW: %zu\n", old_len, add_len);
 
     char *buffer = txt->data.syms;
     if (old_len == 0) {
@@ -106,11 +108,36 @@ static void gk_add_text(GK_Display *disp, const char *text, GK_ID id) {
     memcpy(buffer + old_len - 1, text, add_len + 1);
     txt->data.syms = buffer;
     txt->data.size = (int)(old_len + add_len);
+    // obj->must_show = true;
+    return ;
+}
+
+void gk_add_text_button(GK_Display *disp, const char *text, GK_ID id) {
+    assert(disp);
+    assert(text);
+    if (id < 0 || id >= disp->data.size)  ExitF("Bad ID", );
+
+    GK_GraphicObject *obj = &(disp->data.pool[id]);
+    if (obj->kind != GK_GRAPHIC_BUTTON) {
+        return ;
+    }
+
+    // Не очень хорошо написано, но пока чисто для тестирования
+    // TODO Переделать
+    GK_GraphicButton *but = obj->data.but;
+    if (but->text != NULL) {
+        free(but->text);
+    }
+
+    but->text = (char *)calloc(strlen(text) + 1, sizeof(char));
+    if (but->text == NULL)  ExitF("NULL Calloc", );
+
+    strcpy(but->text, text);
     return ;
 }
 
 // ----------------------------------------------------------------------
-static void gk_clear_text(GK_Display *disp, GK_ID id) {
+void gk_clear_text(GK_Display *disp, GK_ID id) {
     assert(disp);
     if (id < 0 || id >= disp->data.size) ExitF("Bad ID", );
 
@@ -129,7 +156,7 @@ static void gk_clear_text(GK_Display *disp, GK_ID id) {
 }
 
 // ----------------------------------------------------------------------
-static void gk_add_image(GK_Display *disp, const char *file, GK_ID id) {
+void gk_add_image(GK_Display *disp, const char *file, GK_ID id) {
     assert(disp);
     assert(file);
     if (id < 0 || id >= disp->data.size) ExitF("Bad ID", );
@@ -149,7 +176,7 @@ static void gk_add_image(GK_Display *disp, const char *file, GK_ID id) {
 }
 
 // ----------------------------------------------------------------------
-static void gk_clear_image(GK_Display *disp, GK_ID id) {
+void gk_clear_image(GK_Display *disp, GK_ID id) {
     assert(disp);
     if (id < 0 || id >= disp->data.size) ExitF("Bad ID", );
 
@@ -166,73 +193,13 @@ static void gk_clear_image(GK_Display *disp, GK_ID id) {
 }
 
 
-// ====================================================================
-// THIS FUNCTIONS MUST BE ADJUSTED WHEN CHANGING CONFIGS
-// ====================================================================
-
-// ----------------------------------------------------------------------
-static GK_ID gk_get_output_text_window(const GK_Display *disp) {
-    assert(disp);
-
-    switch (disp->cur_menu) {
-        case GK_MENU_GUESS:     return GK_GUESS_MAIN_TEXT;
-        case GK_MENU_SUCCESS:   return GK_SUCCESS_MAIN_TEXT;
-        case GK_MENU_N_SUCCESS: return GK_N_SUCCESS_MAIN_TEXT;
-
-        case GK_MENU_START_GUESS:   return GK_START_GUESS_MAIN_TEXT;
-        case GK_MENU_ADMIN_MENU:    return GK_ADMIN_MENU_MAIN_TEXT;
-        case GK_MENU_ADD_MENU:      return GK_ADD_MENU_MAIN_TEXT;
-        case GK_MENU_EXIT_MENU:
-        case GK_MENU_INIT:
-        default:                return GK_INVALID_ID;
-    }
-    return GK_INVALID_ID;
-}
-
-static GK_ID gk_get_input_text_window(const GK_Display *disp) {
-    assert(disp);
-
-    switch (disp->cur_menu) {
-        case GK_MENU_ADMIN_MENU:    return GK_ADMIN_MENU_PSW_TEXT;
-        case GK_MENU_ADD_MENU:      return GK_ADD_MENU_INP_TEXT;
-
-        case GK_MENU_GUESS:
-        case GK_MENU_SUCCESS:
-        case GK_MENU_N_SUCCESS:
-        case GK_MENU_START_GUESS:
-        case GK_MENU_EXIT_MENU:
-        case GK_MENU_INIT:
-        default:                return GK_INVALID_ID;
-    }
-    return GK_INVALID_ID;
-}
-
-// ----------------------------------------------------------------------
-static GK_ID gk_get_image_window(const GK_Display *disp) {
-    assert(disp);
-
-    switch (disp->cur_menu) {
-        case GK_MENU_GUESS:     return GK_GUESS_IMAGE;
-        case GK_MENU_SUCCESS:   return GK_SUCCESS_IMAGE;
-        case GK_MENU_N_SUCCESS: return GK_N_SUCCESS_IMAGE;
-
-        case GK_MENU_START_GUESS:
-        case GK_MENU_ADMIN_MENU:
-        case GK_MENU_ADD_MENU:
-        case GK_MENU_EXIT_MENU:
-        case GK_MENU_INIT:
-        default:                return GK_INVALID_ID;
-    }
-    return GK_INVALID_ID;
-}
-
 
 // ====================================================================
 // INPUT FUNCTIONS
 // ====================================================================
 
 // ----------------------------------------------------------------------
-static void gk_input_clear(GK_TextInput *inp, bool is_hidden) {
+void gk_input_clear(GK_TextInput *inp, bool is_hidden) {
     assert(inp);
 
     memset(inp->buffer, 0, sizeof(inp->buffer));
@@ -256,7 +223,7 @@ static inline void gk_input_set_max_size(GK_TextInput *inp, int size) {
 }
 
 // ----------------------------------------------------------------------
-static void gk_input_append_text(GK_TextInput *inp, const char *text) {
+void gk_input_append_text(GK_TextInput *inp, const char *text) {
     assert(inp);
     assert(text);
 
@@ -275,7 +242,7 @@ static void gk_input_append_text(GK_TextInput *inp, const char *text) {
 }
 
 // ----------------------------------------------------------------------
-static void gk_input_backspace(GK_TextInput *inp) {
+void gk_input_backspace(GK_TextInput *inp) {
     assert(inp);
 
     if (!inp->is_active) return ;
@@ -293,7 +260,7 @@ static void gk_input_backspace(GK_TextInput *inp) {
 }
 
 // ----------------------------------------------------------------------
-static void gk_input_begin(GK_TextInput *inp, bool is_hidden) {
+void gk_input_begin(GK_TextInput *inp, bool is_hidden) {
     assert(inp);
 
     gk_input_clear(inp, is_hidden);
@@ -304,7 +271,7 @@ static void gk_input_begin(GK_TextInput *inp, bool is_hidden) {
 }
 
 // ----------------------------------------------------------------------
-static void gk_input_end(GK_TextInput *inp) {
+void gk_input_end(GK_TextInput *inp) {
     assert(inp);
 
     SDL_StopTextInput();
@@ -314,108 +281,107 @@ static void gk_input_end(GK_TextInput *inp) {
 }
 
 // ----------------------------------------------------------------------
-static inline void gk_input_hide(GK_TextInput *inp) {
+inline void gk_input_hide(GK_TextInput *inp) {
     assert(inp);
 
     inp->is_hidden = true;
 }
 
 // ----------------------------------------------------------------------
-static inline void gk_input_show(GK_TextInput *inp) {
+inline void gk_input_show(GK_TextInput *inp) {
     assert(inp);
 
     inp->is_hidden = false;
 }
-
-// ----------------------------------------------------------------------
-static int gk_utf8_count_codepoints(const char *text) {
-    assert(text);
-
-    int count = 0;
-    int i = 0;
-
-    while (text[i] != '\0') {
-        unsigned char c = (unsigned char)text[i];
-
-        if ((c & 0xC0u) != 0x80u) {
-            count++;
-        }
-        i++;
-    }
-
-    return count;
-}
-
-// ----------------------------------------------------------------------
-static SDL_Surface *gk_input_text_create_surface(TTF_Font *font, GK_TextInput *inp) {
-    assert(font);
-    assert(inp);
-
-    if (inp->is_active == false)  return NULL;
-
-    SDL_Surface *text_sur = NULL;
-
-    char buffer[sizeof(inp->buffer)] = " ";
-    if (inp->is_hidden == true) {
-        for (int i = 0; i < gk_utf8_count_codepoints(inp->buffer); i++) {
-            buffer[i] = '*';
-        }
-
-        text_sur = TTF_RenderUTF8_Blended(font,
-            buffer, GK_FONT_COLOR);
-    } else {
-        if (inp->buffer[0] == '\0') {
-            text_sur = TTF_RenderUTF8_Blended(font,
-            buffer, GK_FONT_COLOR);
-        } else {
-            text_sur = TTF_RenderUTF8_Blended(font,
-                inp->buffer, GK_FONT_COLOR);
-        }
-    }
-
-    if (text_sur == NULL)   ExitF("NULL Surface", NULL);
-
-    const int underline_gap = 4;
-    const int underline_h = 2;
-
-    int final_w = text_sur->w;
-    int final_h = text_sur->h + underline_gap + underline_h;
-
-    if (final_w <= 0) final_w = 1;
-    if (final_h <= 0) final_h = 1;
-
-    SDL_Surface *final_sur = SDL_CreateRGBSurfaceWithFormat(
-        0, final_w, final_h, 32, SDL_PIXELFORMAT_RGBA8888);
-
-    if (final_sur == NULL) {
-        SDL_FreeSurface(text_sur);
-        ExitF("NULL Surface", NULL);
-    }
-
-    SDL_FillRect(final_sur, NULL,
-        SDL_MapRGBA(final_sur->format, 0, 0, 0, 0));
-
-    SDL_Rect text_dst = {0, 0, text_sur->w, text_sur->h};
-    SDL_BlitSurface(text_sur, NULL, final_sur, &text_dst);
-
-    SDL_Rect underline = {};
-    underline.x = 0;
-    underline.y = text_sur->h + underline_gap;
-    underline.w = text_sur->w;
-    underline.h = underline_h;
-
-    Uint32 pixel = SDL_MapRGBA(final_sur->format,
-        GK_FONT_COLOR.r,
-        GK_FONT_COLOR.g,
-        GK_FONT_COLOR.b,
-        GK_FONT_COLOR.a);
-
-    SDL_FillRect(final_sur, &underline, pixel);
-
-    SDL_FreeSurface(text_sur);
-    return final_sur;
-}
-
+//
+// // ----------------------------------------------------------------------
+// static int gk_utf8_count_codepoints(const char *text) {
+//     assert(text);
+//
+//     int count = 0;
+//     int i = 0;
+//
+//     while (text[i] != '\0') {
+//         unsigned char c = (unsigned char)text[i];
+//
+//         if ((c & 0xC0u) != 0x80u) {
+//             count++;
+//         }
+//         i++;
+//     }
+//
+//     return count;
+// }
+//
+// // ----------------------------------------------------------------------
+// static SDL_Surface *gk_input_text_create_surface(TTF_Font *font, GK_TextInput *inp) {
+//     assert(font);
+//     assert(inp);
+//
+//     if (inp->is_active == false)  return NULL;
+//
+//     SDL_Surface *text_sur = NULL;
+//
+//     char buffer[sizeof(inp->buffer)] = " ";
+//     if (inp->is_hidden == true) {
+//         for (int i = 0; i < gk_utf8_count_codepoints(inp->buffer); i++) {
+//             buffer[i] = '*';
+//         }
+//
+//         text_sur = TTF_RenderUTF8_Blended(font,
+//             buffer, GK_FONT_COLOR);
+//     } else {
+//         if (inp->buffer[0] == '\0') {
+//             text_sur = TTF_RenderUTF8_Blended(font,
+//             buffer, GK_FONT_COLOR);
+//         } else {
+//             text_sur = TTF_RenderUTF8_Blended(font,
+//                 inp->buffer, GK_FONT_COLOR);
+//         }
+//     }
+//
+//     if (text_sur == NULL)   ExitF("NULL Surface", NULL);
+//
+//     const int underline_gap = 4;
+//     const int underline_h = 2;
+//
+//     int final_w = text_sur->w;
+//     int final_h = text_sur->h + underline_gap + underline_h;
+//
+//     if (final_w <= 0) final_w = 1;
+//     if (final_h <= 0) final_h = 1;
+//
+//     SDL_Surface *final_sur = SDL_CreateRGBSurfaceWithFormat(
+//         0, final_w, final_h, 32, SDL_PIXELFORMAT_RGBA8888);
+//
+//     if (final_sur == NULL) {
+//         SDL_FreeSurface(text_sur);
+//         ExitF("NULL Surface", NULL);
+//     }
+//
+//     SDL_FillRect(final_sur, NULL,
+//         SDL_MapRGBA(final_sur->format, 0, 0, 0, 0));
+//
+//     SDL_Rect text_dst = {0, 0, text_sur->w, text_sur->h};
+//     SDL_BlitSurface(text_sur, NULL, final_sur, &text_dst);
+//
+//     SDL_Rect underline = {};
+//     underline.x = 0;
+//     underline.y = text_sur->h + underline_gap;
+//     underline.w = text_sur->w;
+//     underline.h = underline_h;
+//
+//     Uint32 pixel = SDL_MapRGBA(final_sur->format,
+//         GK_FONT_COLOR.r,
+//         GK_FONT_COLOR.g,
+//         GK_FONT_COLOR.b,
+//         GK_FONT_COLOR.a);
+//
+//     SDL_FillRect(final_sur, &underline, pixel);
+//
+//     SDL_FreeSurface(text_sur);
+//     return final_sur;
+// }
 
 
 // ====================================================================
@@ -511,36 +477,36 @@ static void gk_render_text(SDL_Renderer *render, TTF_Font *font, GK_GraphicText 
     return ;
 }
 
-// ----------------------------------------------------------------------
-static void gk_render_text(SDL_Renderer *render, TTF_Font *font, GK_GraphicText *txt, GK_TextInput *inp) {
-    assert(render);
-    assert(font);
-    assert(txt);
-    assert(inp);
-
-    if (inp->is_active == false || txt->kind != GK_GRAPHIC_TEXT_KIND_INPUT) {
-        return ;
-    }
-
-    if (txt->background != NULL) {
-        SDL_RenderCopy(render, txt->background, NULL, &txt->place);
-    }
-
-    SDL_Surface *surface = gk_input_text_create_surface(font, inp);
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(render, surface);
-    SDL_Rect dst = {};
-    dst.w = surface->w;
-    dst.h = surface->h;
-
-    dst.x = txt->place.x + (txt->place.w - surface->w) / 2;
-    dst.y = txt->place.y + (txt->place.h - surface->h) / 2;
-
-    SDL_RenderCopy(render, texture, NULL, &dst);
-
-    SDL_DestroyTexture(texture);
-    SDL_FreeSurface(surface);
-    return ;
-}
+// // ----------------------------------------------------------------------
+// static void gk_render_text(SDL_Renderer *render, TTF_Font *font, GK_GraphicText *txt, GK_TextInput *inp) {
+//     assert(render);
+//     assert(font);
+//     assert(txt);
+//     assert(inp);
+//
+//     if (inp->is_active == false || txt->kind != GK_GRAPHIC_TEXT_KIND_INPUT) {
+//         return ;
+//     }
+//
+//     if (txt->background != NULL) {
+//         SDL_RenderCopy(render, txt->background, NULL, &txt->place);
+//     }
+//
+//     SDL_Surface *surface = gk_input_text_create_surface(font, inp);
+//     SDL_Texture *texture = SDL_CreateTextureFromSurface(render, surface);
+//     SDL_Rect dst = {};
+//     dst.w = surface->w;
+//     dst.h = surface->h;
+//
+//     dst.x = txt->place.x + (txt->place.w - surface->w) / 2;
+//     dst.y = txt->place.y + (txt->place.h - surface->h) / 2;
+//
+//     SDL_RenderCopy(render, texture, NULL, &dst);
+//
+//     SDL_DestroyTexture(texture);
+//     SDL_FreeSurface(surface);
+//     return ;
+// }
 
 // ----------------------------------------------------------------------
 static void gk_render_button(SDL_Renderer *render, TTF_Font *font, GK_GraphicButton *but) {
@@ -598,10 +564,6 @@ static void gk_render_video(SDL_Renderer *render, GK_GraphicVideo *vid) {
 }
 
 
-// ====================================================================
-// MAIN GRAPHIC FUNCTIONS
-// ====================================================================
-
 // ----------------------------------------------------------------------
 void GK_InitDisplay(GK_Display *disp) {
     assert(disp);
@@ -651,195 +613,6 @@ void GK_DestroyDisplay(GK_Display *disp) {
     SDL_Quit();
 }
 
-// ----------------------------------------------------------------------
-void GK_DisplayTreeBranch(GK_Display *disp, GK_TreeObject *obj) {
-    assert(disp);
-    assert(obj);
-
-    const GK_ID text_win = gk_get_output_text_window(disp);
-    const GK_ID img_win  = gk_get_image_window(disp);
-
-    if (text_win != GK_INVALID_ID) {
-        gk_clear_text(disp, text_win);
-    }
-    if (img_win != GK_INVALID_ID) {
-        gk_clear_image(disp, img_win);
-    }
-
-    switch (disp->cur_menu) {
-        case GK_MENU_GUESS:
-            gk_add_text(disp, (obj->set & GK_TREE_OBJECT_HAVE_TEXT) ? obj->text : "неизвестный объект", text_win);
-            if ((obj->set & GK_TREE_OBJECT_HAVE_IMAGE) && obj->files.img != NULL) {
-                gk_add_image(disp, obj->files.img, img_win);
-            }
-            break;
-
-        case GK_MENU_SUCCESS:
-            gk_add_text(disp, "Я думаю, это:  ", text_win);
-            gk_add_text(disp, (obj->set & GK_TREE_OBJECT_HAVE_TEXT) ? obj->text : "неизвестный объект", text_win);
-            break;
-
-        case GK_MENU_N_SUCCESS:
-            gk_add_text(disp, "Не угадал. Объект: ", text_win);
-            gk_add_text(disp, (obj->set & GK_TREE_OBJECT_HAVE_TEXT) ? obj->text : "неизвестный объект", text_win);
-            break;
-
-        case GK_MENU_START_GUESS:
-        case GK_MENU_ADMIN_MENU:
-        case GK_MENU_EXIT_MENU:
-        case GK_MENU_ADD_MENU:
-        case GK_MENU_INIT:
-        default:
-            break;
-    }
-    return ;
-}
-
-// ----------------------------------------------------------------------
-GK_ActionKind GK_PollAction(GK_Display *disp) {
-    assert(disp);
-
-    SDL_Event event = {};
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_QUIT) {
-            return GK_ACTION_EXIT;
-        }
-
-        if (disp->text_inp.is_active) {
-            if (event.type == SDL_TEXTINPUT) {
-                gk_input_append_text(&(disp->text_inp), event.text.text);
-                return GK_ACTION_INPUT_CHANGED;
-            }
-            if (event.type == SDL_KEYDOWN) {
-                switch (event.key.keysym.sym) {
-                    case SDLK_BACKSPACE:
-                        gk_input_backspace(&(disp->text_inp));
-                        return GK_ACTION_INPUT_CHANGED;
-
-                    case SDLK_RETURN:
-                    case SDLK_KP_ENTER:
-                        return GK_ACTION_INPUT_SUBMIT;
-
-                    case SDLK_ESCAPE:
-                        return GK_ACTION_INPUT_CANCEL;
-
-                    default:
-                        break;
-                }
-            }
-            continue;
-        }
-
-        GK_Menu *menu = &(disp->menus[disp->cur_menu]);
-        for (int i = 0; i < menu->size; i++) {
-            const GK_ID id = menu->data[i];
-            if (id < 0 || id >= disp->data.size) {
-                continue;
-            }
-
-            GK_GraphicObject *obj = &(disp->data.pool[id]);
-            if (obj->kind != GK_GRAPHIC_BUTTON || obj->data.but == NULL) {
-                continue;
-            }
-
-            const GK_ActionKind action = gk_check_click_button(&event, obj->data.but);
-            if (action != GK_ACTION_NONE) {
-                return action;
-            }
-        }
-    }
-
-    return GK_ACTION_NONE;
-}
-
-// ----------------------------------------------------------------------
-void GK_Update(GK_Main *app, GK_ActionKind action) {
-    assert(app);
-
-    switch (action) {
-        case GK_ACTION_NONE:
-            return ;
-
-        case GK_ACTION_BEGIN_GUESS:
-            app->tree.cur = app->tree.null;
-            app->disp.cur_menu = GK_MENU_GUESS;
-            GK_DisplayTreeBranch(&app->disp, app->tree.cur);
-            return ;
-
-        case GK_ACTION_OPEN_ADMIN:
-            app->disp.cur_menu = GK_MENU_ADMIN_MENU;
-            gk_input_begin(&(app->disp.text_inp), true);
-            return ;
-
-        case GK_ACTION_RETURN_TO_MENU: {
-            app->disp.cur_menu = GK_MENU_START_GUESS;
-            GK_ID text_id = gk_get_output_text_window(&(app->disp));
-            gk_clear_text(&(app->disp), text_id);
-            gk_add_text(&(app->disp), "Приветствуем тебя в нашей программе Акинатор", text_id);
-            return ;
-        }
-
-        case GK_ACTION_ANSWER_YES: {
-            if (app->tree.cur == NULL) {
-                return ;
-            }
-
-            if (app->tree.cur->branch.yes->kind == GK_TREE_OBJECT_LEAF) {
-                app->disp.cur_menu = GK_MENU_SUCCESS;
-            }
-
-            app->tree.cur = app->tree.cur->branch.yes;
-            GK_DisplayTreeBranch(&app->disp, app->tree.cur);
-            return ;
-        }
-
-        case GK_ACTION_ANSWER_NO: {
-            if (app->tree.cur == NULL) {
-                return ;
-            }
-
-            if (app->tree.cur->branch.no->kind == GK_TREE_OBJECT_LEAF) {
-                app->disp.cur_menu = GK_MENU_SUCCESS;
-            }
-
-            app->tree.cur = app->tree.cur->branch.no;
-            GK_DisplayTreeBranch(&app->disp, app->tree.cur);
-            return ;
-        }
-
-
-        case GK_ACTION_INPUT_CANCEL:
-        case GK_ACTION_INPUT_SUBMIT: {
-            if (app->disp.cur_menu == GK_MENU_ADMIN_MENU) {
-
-                if (strncmp(app->disp.text_inp.buffer, "fopf huiny",
-                    sizeof("fopf huiny")) == 0) {
-                    GK_ID text_in_id = gk_get_input_text_window(&(app->disp));
-                    app->disp.data.pool[text_in_id].must_show = false;
-                } else {
-                    app->disp.cur_menu = GK_MENU_START_GUESS;
-                }
-
-            } else if (app->disp.cur_menu == GK_MENU_ADD_MENU) {
-                // Add Object
-            }
-
-            gk_input_end(&(app->disp.text_inp));
-            // gk_input_stop(&(app->disp.text_inp));
-            return ;
-        }
-
-        case GK_ACTION_INPUT_CHANGED:
-        case GK_ACTION_EXIT:
-        case GK_ACTION_LOAD_DATA:
-        case GK_ACTION_UPLOAD_DATA:
-        case GK_ACTION_ADD_OBJECT:
-        case GK_ACTION_CONTROL_RECORD:
-        default:
-            return ;
-    }
-    return ;
-}
 
 // ----------------------------------------------------------------------
 void GK_Render(GK_Main *app) {
@@ -867,17 +640,17 @@ void GK_Render(GK_Main *app) {
                 break;
 
             case GK_GRAPHIC_IMAGE:
-                if (obj->data.img != NULL) {
+                if (obj->data.img->tex != NULL) {
                     gk_show_image(render, obj->data.img->tex, &(obj->data.img->place));
                 }
                 break;
 
             case GK_GRAPHIC_TEXT:
-                if (obj->data.text->kind == GK_GRAPHIC_TEXT_KIND_OUTPUT) {
+                // if (obj->data.text->kind == GK_GRAPHIC_TEXT_KIND_OUTPUT) {
                     gk_render_text(render, app->disp.sys.font, obj->data.text);
-                } else {
-                    gk_render_text(render, app->disp.sys.font, obj->data.text, &(app->disp.text_inp));
-                }
+                // } else {
+                    // gk_render_text(render, app->disp.sys.font, obj->data.text, &(app->disp.text_inp));
+                // }
 
                 break;
 

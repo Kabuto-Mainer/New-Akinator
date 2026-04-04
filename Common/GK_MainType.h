@@ -12,14 +12,11 @@
 
 // ------------------------------------------------------------------
 enum GK_MenuKind {
-    GK_MENU_INIT = 0,
-    GK_MENU_START_GUESS,
-    GK_MENU_GUESS,
-    GK_MENU_SUCCESS,
-    GK_MENU_N_SUCCESS,
-    GK_MENU_ADMIN_MENU,
-    GK_MENU_ADD_MENU,
-    GK_MENU_EXIT_MENU,
+    GK_MENU_INIT,
+    GK_MENU_START_PLAY,
+    GK_MENU_VIEW,
+    GK_MENU_CHOICE,
+    GK_MENU_EXIT,
 };
 
 // ====================================================================
@@ -39,6 +36,10 @@ struct GK_Display {
 
 // ------------------------------------------------------------------
 struct GK_Main {
+    struct {
+        GK_Node *node;
+        int step;
+    } cur;
     GK_Tree tree;
     GK_Display disp;
 };
