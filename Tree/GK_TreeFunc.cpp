@@ -33,6 +33,7 @@ static void gk_add_token(GK_TokenContext *cont, GK_Token token) {
         cont->data.capacity *= 2;
     }
     cont->data.tokens[cont->data.size++] = token;
+    // printf("%s\n", token.text ? token.text : "NULL");
 }
 
 // ----------------------------------------------------------------------
@@ -91,37 +92,49 @@ static void gk_add_node(GK_Tree *tree, GK_Node *node) {
         tree->capacity *= 2;
     }
     tree->nodes[tree->amount++] = *node;
+    // printf("[%s] %s\n", node->id, node->kind == GK_NODE_NEXT ? node->next.without_choice.name : "CHOICE");
 }
 
 // ----------------------------------------------------------------------
 static inline void gk_skip_void(GK_TokenContext *cont) {
     assert(cont);
 
-    while (cont->buffer[cont->cur_p] == '\n' ||
-           cont->buffer[cont->cur_p] == '\t' ||
-           cont->buffer[cont->cur_p] == ' ' )   cont->cur_p++;
+    while (cont->cur_p < cont->size_buffer &&
+           (cont->buffer[cont->cur_p] == '\n' ||
+            cont->buffer[cont->cur_p] == '\t' ||
+            cont->buffer[cont->cur_p] == ' '  ||
+            cont->buffer[cont->cur_p] == '\r')) {
+        cont->cur_p++;
+    }
 }
-
-// ----------------------------------------------------------------------
 static void gk_tokenize_buffer(GK_TokenContext *cont) {
     assert(cont);
 
     char buffer[GK_MAX_SIZE_TEXT] = "";
     int len = 0;
 
-    while (cont->cur_p != cont->size_buffer - 1) {
+    while (cont->cur_p < cont->size_buffer && cont->buffer[cont->cur_p] != '\0') {
         gk_skip_void(cont);
 
-        // printf("Something\n");
-        // printf("%s\n", cont->buffer + cont->cur_p);
+        if (cont->cur_p >= cont->size_buffer || cont->buffer[cont->cur_p] == '\0') {
+            break;
+        }
+
         GK_Token token = {};
+        len = 0;
+        buffer[0] = '\0';
+
         switch (cont->buffer[cont->cur_p]) {
             case '"':
-                sscanf(cont->buffer + cont->cur_p, "\"%[^\"]\"%n", buffer, &len);
+                if (sscanf(cont->buffer + cont->cur_p, "\"%[^\"]\"%n", buffer, &len) != 1) {
+                    ExitF("Bad string token", );
+                }
+                // printf("TOKEN RAW: [%s]\n", buffer);
                 cont->cur_p += len;
 
                 token.kind = GK_NODE_TOKEN_STRING;
                 token.text = strdup(buffer);
+                // printf("%s\n", token.text);
                 break;
 
             case '{':
@@ -134,8 +147,10 @@ static void gk_tokenize_buffer(GK_TokenContext *cont) {
                 cont->cur_p++;
                 break;
 
-            default:
-                sscanf(cont->buffer + cont->cur_p, "%s %n", buffer, &len);
+            default: {
+                if (sscanf(cont->buffer + cont->cur_p, "%1023s%n", buffer, &len) != 1) {
+                    ExitF("Bad token read", );
+                }
                 cont->cur_p += len;
 
                 uint64_t hash = gk_get_hash(buffer);
@@ -144,44 +159,49 @@ static void gk_tokenize_buffer(GK_TokenContext *cont) {
                     case gk_get_hash("step"):
                         token.kind = GK_NODE_TOKEN_STEP;
                         break;
-
                     case gk_get_hash("text:"):
                         token.kind = GK_NODE_TOKEN_TEXT;
                         break;
-
                     case gk_get_hash("img:"):
                         token.kind = GK_NODE_TOKEN_IMG;
                         break;
-
                     case gk_get_hash("smp:"):
                         token.kind = GK_NODE_TOKEN_SMP;
                         break;
-
                     case gk_get_hash("go:"):
                         token.kind = GK_NODE_TOKEN_GO;
                         break;
-
                     case gk_get_hash("next:"):
                         token.kind = GK_NODE_TOKEN_NEXT;
                         break;
-
+                    case gk_get_hash("choice"):
+                        token.kind = GK_NODE_TOKEN_CHOICE;
+                        break;
                     default:
                         token.kind = GK_NODE_TOKEN_NAME;
                         token.text = strdup(buffer);
+                        // printf("NAME: %s\n", buffer);
                         break;
                 }
+                break;
+            }
         }
+
+        // printf("TOKEN kind=%d text=%s\n", token.kind, token.text ? token.text : "NULL");
         gk_add_token(cont, token);
     }
-    return ;
 }
 
 static inline GK_Token get_t(GK_TokenContext *cont) {
+    assert(cont);
+    assert(cont->data.tokens);
+    assert(cont->data.capacity >= 0);
+    assert(cont->data.capacity < cont->data.size);
     return cont->data.tokens[cont->data.capacity];
 }
 
 static inline void next_t(GK_TokenContext *cont) {
-    if (cont->data.size != cont->data.capacity + 1) cont->data.capacity++;
+    if (cont->data.size != cont->data.capacity) cont->data.capacity++;
 }
 
 static void gk_parse_step(GK_TokenContext *cont, GK_Node *node) {
@@ -301,11 +321,13 @@ static void gk_parse_token(GK_TokenContext *cont, GK_Tree *tree) {
     int last_capacity = cont->data.capacity;
     cont->data.capacity = 0;    // !!!! Capacity is counter of elements
 
-    while (cont->data.capacity + 1 < cont->data.size) {
+    while (cont->data.capacity < cont->data.size) {
         GK_Node node = {};
 
         if (get_t(cont).kind != GK_NODE_TOKEN_NAME)     ExitF("Skipped Name", );
         node.id = get_t(cont).text;
+        node.is_checked = false;
+        // printf("NODE_TEXT: %s\n", node.id);
         next_t(cont);
 
         if (get_t(cont).kind != GK_NODE_TOKEN_LBRACE)   ExitF("Skipped { in file", );
@@ -313,13 +335,13 @@ static void gk_parse_token(GK_TokenContext *cont, GK_Tree *tree) {
 
         bool running = true;
         while (running) {
-            // printf("%d\n", get_t(cont).kind);
             switch (get_t(cont).kind) {
                 case GK_NODE_TOKEN_STEP:
                     gk_parse_step(cont, &node);
                     break;
 
                 case GK_NODE_TOKEN_CHOICE:
+                    // printf("CHOICE: %s\n", node.id);
                     gk_parse_choice(cont, &node);
                     break;
 
@@ -329,6 +351,7 @@ static void gk_parse_token(GK_TokenContext *cont, GK_Tree *tree) {
                     if (get_t(cont).kind != GK_NODE_TOKEN_STRING) {
                         ExitF("Skipped string after \"next:\"", );
                     }
+                    printf("NODE: %s\n NEXT: %s\n", node.id, get_t(cont).text);
                     node.next.without_choice.name = get_t(cont).text;
                     node.kind = GK_NODE_NEXT;
                     next_t(cont);
@@ -363,6 +386,7 @@ static GK_Node *gk_find_node(GK_Tree *tree, const char *name) {
     assert(tree);
     assert(name);
 
+    // printf("FindName: %s\n", name);
     uint64_t hash = gk_get_hash(name);
 
     for (int i = 0; i < tree->amount; i++) {
@@ -379,11 +403,17 @@ static void gk_fill_id(GK_Tree *tree, GK_Node *node) {
     assert(tree);
     assert(node);
 
-    if (node->kind == GK_NODE_NEXT) {
+    // printf("NODE: %s\n", node->id);
+    if (node->is_checked == true)   return ;
+
+    node->is_checked = true;
+    if (node->kind == GK_NODE_NEXT || node->kind == GK_NODE_END) {
+        if (node->kind == GK_NODE_END)  return ;
         char *name = node->next.without_choice.name;
         node->next.without_choice.ptr = gk_find_node(tree, name);
+
         if (node->next.without_choice.ptr == NULL) {
-            printf("Name: %s\n", name);
+            printf("ID: %s, Name: %s\n", node->id, name);
             ExitF("Can not find this block", );
         }
 
@@ -393,8 +423,7 @@ static void gk_fill_id(GK_Tree *tree, GK_Node *node) {
 
         free(name);
         gk_fill_id(tree, node->next.without_choice.ptr);
-    }
-    else {
+    } else if (node->kind == GK_NODE_CHOICE) {
         for (int i = 0; i < node->next.with_choice.amount; i++) {
             char *name = node->next.with_choice.next[i].target.name;
             node->next.with_choice.next[i].target.ptr = gk_find_node(tree, name);
@@ -403,6 +432,7 @@ static void gk_fill_id(GK_Tree *tree, GK_Node *node) {
                 printf("Name: %s\n", name);
                 ExitF("Can not find this block", );
             }
+
             if (strcmp("end", name) == 0) {
                 node->next.with_choice.next[i].target.ptr->kind = GK_NODE_END;
             }
@@ -411,7 +441,6 @@ static void gk_fill_id(GK_Tree *tree, GK_Node *node) {
             gk_fill_id(tree, node->next.with_choice.next[i].target.ptr);
         }
     }
-    return ;
 }
 
 static void gk_fill_id(GK_Tree *tree) {
@@ -419,6 +448,10 @@ static void gk_fill_id(GK_Tree *tree) {
 
     tree->start = gk_find_node(tree, "start");
     if (tree->start == NULL)    ExitF("Can not find start step", );
+
+    // for (int i = 0; i < tree->amount; i++) {
+    //     printf("[%3d]{%s}\n", i, tree->nodes[i].id);
+    // }
 
     gk_fill_id(tree, tree->start);
     return ;
@@ -432,7 +465,7 @@ void GK_LoadTree(GK_Tree *tree, const char *name) {
     char *buffer = gk_create_file_buffer(name, size);
 
     GK_TokenContext cont = {.buffer = buffer, .cur_p = 0, .size_buffer = size,
-                            {NULL, 0, 0}};
+                            {NULL, 0, 0, 0}};
 
     gk_tokenize_buffer(&cont);
     free(buffer);

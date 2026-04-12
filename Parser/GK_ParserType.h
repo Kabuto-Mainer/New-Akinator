@@ -9,8 +9,8 @@
 // CONSTANTS
 // ====================================================================
 
-constexpr static int GK_PARSER_MAX_KIND = 64;
-constexpr static int GK_PARSER_MAX_PATH = 256;
+constexpr static int GK_PARSER_MAX_KIND = 1024;
+constexpr static int GK_PARSER_MAX_PATH = 1024;
 constexpr static int GK_PARSER_MAX_TEXT = 1024;
 constexpr static int GK_PARSER_MAX_ITEMS = GK_OBJECT_COUNT;
 

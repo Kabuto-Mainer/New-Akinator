@@ -7,9 +7,10 @@
 // CONSTATS
 // ====================================================================
 
-int GK_SCREEN_WIDTH = 1280;
-int GK_SCREEN_HEIGHT = 720;
+int GK_SCREEN_WIDTH = 1600;
+int GK_SCREEN_HEIGHT = 1000;
 const char *GK_SYSTEM_FONT = "Data/font.ttf";
+const char *GK_FONE_MUSIC = "Data/music.mp3";
 extern const SDL_Color GK_FONT_COLOR = {255, 255, 255, 255};
 const char *GK_CONFIG_OBJECT_FILE = "Configs/obj.conf";
 const char *GK_CONFIG_MENU_FILE = "Configs/menu.conf";

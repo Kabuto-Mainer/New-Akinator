@@ -12,6 +12,7 @@
 extern int GK_SCREEN_WIDTH;
 extern int GK_SCREEN_HEIGHT;
 extern const char *GK_SYSTEM_FONT;
+extern const char *GK_FONE_MUSIC;
 extern const SDL_Color GK_FONT_COLOR;
 
 
@@ -50,7 +51,6 @@ GK_ActionKind gk_check_click_button(SDL_Event *event, GK_GraphicButton *but) {
     assert(but);
 
     if (event->type == SDL_MOUSEMOTION) {
-        but->is_pressed = false;
         but->is_hovered = gk_point_in_rect(event->motion.x, event->motion.y, but->place);
         return GK_ACTION_NONE;
     }
@@ -67,10 +67,9 @@ GK_ActionKind gk_check_click_button(SDL_Event *event, GK_GraphicButton *but) {
         return GK_ACTION_NONE;
     }
 
-    but->is_pressed = gk_point_in_rect(event->button.x, event->button.y, but->place);
-    but->is_hovered = but->is_pressed;
+    but->is_hovered = gk_point_in_rect(event->button.x, event->button.y, but->place);
 
-    return but->is_pressed ? but->act : GK_ACTION_NONE;
+    return but->is_hovered ? but->act : GK_ACTION_NONE;
 }
 
 // ----------------------------------------------------------------------
@@ -192,6 +191,20 @@ void gk_clear_image(GK_Display *disp, GK_ID id) {
     return ;
 }
 
+void gk_control_music(GK_Display *disp) {
+    assert(disp);
+
+    int static state = 0;
+    if (state == 1) {
+        Mix_PauseMusic();
+        state = 0;
+    } else {
+        Mix_ResumeMusic();
+        state = 1;
+    }
+    // printf("njkasbdjkads\n");
+    return ;
+}
 
 
 // ====================================================================
@@ -513,7 +526,12 @@ static void gk_render_button(SDL_Renderer *render, TTF_Font *font, GK_GraphicBut
     assert(render);
     assert(but);
 
-    SDL_Texture *tex = (but->is_pressed | but->is_hovered) ? but->texture.pressed : but->texture.unpressed;
+    SDL_Texture *tex = NULL;
+    if (but->is_switcher) {
+        tex = (but->is_pressed) ? but->texture.pressed : but->texture.unpressed;
+    } else {
+        tex = (but->is_hovered) ? but->texture.pressed : but->texture.unpressed;
+    }
     if (tex != NULL) {
         SDL_RenderCopy(render, tex, NULL, &but->place);
     }
@@ -578,13 +596,20 @@ void GK_InitDisplay(GK_Display *disp) {
     SDL_Renderer *render = SDL_CreateRenderer(win, -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-    TTF_Font *font = TTF_OpenFont(GK_SYSTEM_FONT, 30);
+    TTF_Font *font = TTF_OpenFont(GK_SYSTEM_FONT, 24);
 
     disp->sys.font = font;
     disp->sys.win = win;
     disp->sys.ren = render;
 
     gk_input_clear(&(disp->text_inp), false);
+
+    Mix_OpenAudio (44100, MIX_DEFAULT_FORMAT, 2, 2048);
+    Mix_Init (MIX_INIT_MP3);
+
+    disp->music = Mix_LoadMUS(GK_FONE_MUSIC);
+    Mix_PlayMusic(disp->music, -1);
+    Mix_VolumeMusic(MIX_MAX_VOLUME);
     // gk_load_resources(disp);
     return ;
 }

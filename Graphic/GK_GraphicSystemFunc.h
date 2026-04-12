@@ -22,4 +22,6 @@ void gk_input_end(GK_TextInput *inp);
 inline void gk_input_hide(GK_TextInput *inp);
 inline void gk_input_show(GK_TextInput *inp);
 
+void gk_control_music(GK_Display *disp);
+
 #endif /* GK_GRAPHIC_SYSTEM_H */

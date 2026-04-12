@@ -366,7 +366,7 @@ static void gk_parse_object_text_arg(GK_ParserObject *par, GK_GraphicText *txt) 
     assert(par);
     assert(txt);
 
-    char buffer[GK_PARSER_MAX_KIND] = "";
+    char buffer[2048] = "";
     int len = 0;
 
     sscanf(par->buffer + par->cur_p, "%s %n", buffer, &len);

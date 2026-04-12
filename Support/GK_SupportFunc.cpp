@@ -31,7 +31,9 @@ char *gk_create_file_buffer(const char *name, int size) {
         ExitF("NULL Calloc", NULL);
     }
 
-    fread(buffer, sizeof(char), (size_t)size, stream);
+    size_t amount_readed = fread(buffer, sizeof(char), (size_t)size, stream);
+    buffer[amount_readed] = '\0';
+    // printf("BUFFER: %s\n", buffer);
     fclose(stream);
 
     return buffer;

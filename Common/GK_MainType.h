@@ -31,7 +31,7 @@ struct GK_Display {
 
     GK_Menu menus[GK_AMOUNT_MENU];
     GK_MenuKind cur_menu;
-    GK_Music music;
+    Mix_Music *music;
 };
 
 // ------------------------------------------------------------------

@@ -31,6 +31,7 @@ struct GK_TokenContext {
         GK_Token *tokens;
         int size;
         int capacity;
+        int pos;
     } data;
 };
 
@@ -70,6 +71,7 @@ struct GK_Node {
 
     GK_NodeData *data;
     int data_amount;
+    bool is_checked;
 
     GK_NodeKind kind;
 

@@ -117,6 +117,10 @@ static void gk_goto_choice(GK_Main *app, int choice) {
 
     app->cur.node = app->cur.node->next.with_choice.next[choice].target.ptr;
     app->cur.step = 0;
+
+    app->disp.cur_menu = GK_MENU_VIEW;
+    gk_display_node(app);
+
     return ;
 }
 
@@ -219,9 +223,11 @@ void GK_Update(GK_Main *app, GK_ActionKind action) {
             gk_goto_choice(app, 3);
             return ;
 
+        case GK_ACTION_CONTROL_MUSIC:
+            gk_control_music(&(app->disp));
+            return ;
 
         case GK_ACTION_EXIT:
-        case GK_ACTION_CONTROL_MUSIC:
         default:
             return ;
     }
